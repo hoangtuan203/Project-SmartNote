@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: BE_SmartNote
+  datasource:
+    url: "jdbc:mysql://localhost:3306/smart-note"
+    username: root
+    password:
+    driverClassName: "com.mysql.cj.jdbc.Driver"
+    jpa:
+      hibernate:
+        ddl-auto: update
+      show-sql: true
+      open-in-view: false
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.MySQL8Dialect
+
