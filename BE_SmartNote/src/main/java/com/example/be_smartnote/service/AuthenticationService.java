@@ -11,6 +11,7 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
@@ -37,13 +38,15 @@ public class AuthenticationService {
     @Value("${jwt.signerKey}")
     protected String signerKey;
 
-    public record TokenInfo(String token, Date expireDate) {
+    @NonFinal
+    protected final String GRANT_TYPE = "authorization_code";
 
+    public record TokenInfo(String token, Date expiryDate) {
     }
 
     //generate token
     public TokenInfo generateToken(User user) {
-        JWSHeader header = new JWSHeader(JWSAlgorithm.ES512);
+        JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
         Date issueTime = new Date();
         Date expireTime = new Date(Instant.ofEpochMilli(issueTime.getTime()).plus(2, ChronoUnit.HOURS).toEpochMilli());
 
@@ -141,10 +144,11 @@ public class AuthenticationService {
         //tra ve ket qua new login thanh cong
         return AuthenticationResponse.builder()
                 .token(token.token)
-                .expiryTime(token.expireDate())
+                .expiryTime(token.expiryDate())
                 .userId(userId)
                 .userName(fullName)
                 .email(email)
+                .authenticated(true)
                 .build();
 
     }

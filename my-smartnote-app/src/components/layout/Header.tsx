@@ -138,7 +138,7 @@ const Header = () => {
                     : AvatarDefault
                 }
                 alt="Avatar"
-                className="w-9 h-6 rounded-full border"
+                className="w-8 h-8 rounded-full border"
               />
             </div>
           ) : (
