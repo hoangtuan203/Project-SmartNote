@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { FaSun, FaMoon, FaSignOutAlt, FaChevronDown, FaBars } from "react-icons/fa";
+import {
+  FaSun,
+  FaMoon,
+  FaSignOutAlt,
+  FaChevronDown,
+  FaBars,
+} from "react-icons/fa";
 import { IoCalendarOutline } from "react-icons/io5";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTheme } from "@/context/ThemeContext";
@@ -9,7 +15,7 @@ import { BsTrash2 } from "react-icons/bs";
 import { GoTasklist } from "react-icons/go";
 import { FaRegNoteSticky } from "react-icons/fa6";
 import { GrHomeRounded } from "react-icons/gr";
-import { HiOutlineUserCircle } from "react-icons/hi2";
+import Logo from "../../assets/logo.png";
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -19,23 +25,34 @@ const Sidebar = () => {
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
   const togglePrivateSection = () => setIsPrivateOpen(!isPrivateOpen);
-  const handleLogout = () => navigate("/login");
+  const handleLogout = () => {
+    localStorage.removeItem("username");
+    localStorage.removeItem("email");
+    localStorage.removeItem("avatar");
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
+  // const username = localStorage.getItem("username");
 
   return (
     <div
       className={`h-screen p-4 flex flex-col transition-all duration-300 shadow-lg
       ${isCollapsed ? "w-20" : "w-64"}
-      ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"}`}
+      ${darkMode ? "bg-gray-900 text-white" : "bg-gray-300 text-gray-900"}`}
     >
-      {/* Header - User Info */}
+      {/* Header - Logo & Toggle Button */}
       <div className="flex items-center justify-between mb-4">
         {!isCollapsed && (
-          <div className="flex items-center gap-3">
-            <HiOutlineUserCircle className="text-4xl" />
-            <span className="text-lg font-semibold">Hoàng Tuấn</span>
+          <div className="flex items-center gap-2">
+            <img src={Logo} alt="Logo" className="w-12 h-auto transition-all" />
+            <span className="text-xl font-bold">Smart Note</span>
           </div>
         )}
-        <button onClick={toggleSidebar} className="p-2 rounded-md hover:bg-gray-200">
+        <button
+          onClick={toggleSidebar}
+          className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
+        >
           <FaBars />
         </button>
       </div>
@@ -44,19 +61,47 @@ const Sidebar = () => {
       <nav className="flex-1">
         <ul className="space-y-3">
           {[
-            { path: "/", label: "Home", icon: <GrHomeRounded className="text-xl" /> },
-            { path: "/note", label: "Notes", icon: <FaRegNoteSticky className="text-xl" /> },
-            { path: "/calendar", label: "Calendar", icon: <IoCalendarOutline className="text-xl" /> },
-            { path: "/task", label: "Tasks", icon: <GoTasklist className="text-xl" /> },
-            { path: "/trash", label: "Trash", icon: <BsTrash2 className="text-xl" /> },
-            { path: "/template", label: "Template", icon: <CgTemplate className="text-xl" /> },
+            {
+              path: "/",
+              label: "Home",
+              icon: <GrHomeRounded className="text-xl" />,
+            },
+            {
+              path: "/note",
+              label: "Notes",
+              icon: <FaRegNoteSticky className="text-xl" />,
+            },
+            {
+              path: "/calendar",
+              label: "Calendar",
+              icon: <IoCalendarOutline className="text-xl" />,
+            },
+            {
+              path: "/task",
+              label: "Tasks",
+              icon: <GoTasklist className="text-xl" />,
+            },
+            {
+              path: "/trash",
+              label: "Trash",
+              icon: <BsTrash2 className="text-xl" />,
+            },
+            {
+              path: "/template",
+              label: "Template",
+              icon: <CgTemplate className="text-xl" />,
+            },
           ].map(({ path, label, icon }) => (
             <li key={path}>
               <NavLink
                 to={path}
                 className={({ isActive }) =>
                   `flex items-center gap-3 p-2 rounded-md transition-all 
-                  ${isActive ? "bg-blue-500 text-white" : "hover:bg-gray-300 dark:hover:bg-gray-700"}`
+                  ${
+                    isActive
+                      ? "bg-gray-600 text-white"
+                      : "hover:bg-gray-300 dark:hover:bg-gray-700"
+                  }`
                 }
               >
                 {icon}
@@ -77,7 +122,11 @@ const Sidebar = () => {
               {!isCollapsed && <span>Private</span>}
             </div>
             {!isCollapsed && (
-              <FaChevronDown className={`transition-transform ${isPrivateOpen ? "rotate-180" : ""}`} />
+              <FaChevronDown
+                className={`transition-transform ${
+                  isPrivateOpen ? "rotate-180" : ""
+                }`}
+              />
             )}
           </button>
           {isPrivateOpen && (
@@ -92,7 +141,11 @@ const Sidebar = () => {
                     to={path}
                     className={({ isActive }) =>
                       `flex items-center gap-3 p-2 rounded-md transition-all 
-                      ${isActive ? "bg-blue-500 text-white" : "hover:bg-gray-300 dark:hover:bg-gray-700"}`
+                      ${
+                        isActive
+                          ? "bg-blue-500 text-white"
+                          : "hover:bg-gray-300 dark:hover:bg-gray-700"
+                      }`
                     }
                   >
                     {!isCollapsed && <span>{label}</span>}
@@ -110,7 +163,11 @@ const Sidebar = () => {
           onClick={toggleDarkMode}
           className="flex items-center gap-3 p-2 w-full rounded-md hover:bg-gray-300 dark:hover:bg-gray-700"
         >
-          {darkMode ? <FaSun className="text-xl" /> : <FaMoon className="text-xl" />}
+          {darkMode ? (
+            <FaSun className="text-xl" />
+          ) : (
+            <FaMoon className="text-xl" />
+          )}
           {!isCollapsed && <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>}
         </button>
         <button

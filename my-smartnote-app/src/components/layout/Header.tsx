@@ -2,11 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FaTimes } from "react-icons/fa";
 import { FiShare2 } from "react-icons/fi";
-
+import AvatarDefault from "../../assets/avatar_default.png";
 import Notification from "../notification/Notification";
-import { GrFavorite } from "react-icons/gr";
 import { IoAddSharp } from "react-icons/io5";
 import { IoArrowBack, IoArrowForward } from "react-icons/io5";
+
 const Header = () => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
@@ -14,6 +14,14 @@ const Header = () => {
   const location = useLocation();
   const [currentTitle, setCurrentTitle] = useState("Dashboard");
 
+  const emailUser = localStorage.getItem("email") || "Guest";
+  const avatarUser = localStorage.getItem("avatar") || "/default-avatar.png"; // Ảnh mặc định nếu không có
+
+  // State lưu thông tin user
+  const [user, setUser] = useState({
+    email: emailUser,
+    avatar: avatarUser,
+  });
   useEffect(() => {
     const pathToTitle: { [key: string]: string } = {
       "/": "Home",
@@ -29,7 +37,7 @@ const Header = () => {
     } else if (location.pathname.startsWith("/task/")) {
       setCurrentTitle(`Task: ${location.pathname.split("/")[2]}`);
     } else {
-      setCurrentTitle(pathToTitle[location.pathname] || "Dashboard");
+      setCurrentTitle(pathToTitle[location.pathname] || "Home");
     }
   }, [location.pathname]);
 
@@ -78,7 +86,7 @@ const Header = () => {
   return (
     <>
       {/* Header */}
-      <header className="w-full bg-white dark:bg-gray-900 text-black dark:text-white p-4 flex justify-between items-center shadow-md">
+      <header className="w-full bg-white dark:bg-gray-900 text-black dark:text-white p-2 flex justify-between items-center shadow-md">
         {/* Button mở modal */}
 
         <div className="flex items-center gap-4">
@@ -120,12 +128,27 @@ const Header = () => {
           {/* Thông báo */}
           <Notification notifications={notifications} />
 
-          <button className="relative  text-black px-4 py-2 rounded-md hover:bg-gray-200 transition-colors">
-            <GrFavorite className="text-xl" />
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-              5
-            </span>
-          </button>
+          {user.email !== "Guest" ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">{user.email}</span>
+              <img
+                src={
+                  user.avatar !== "/default-avatar.png"
+                    ? user.avatar
+                    : AvatarDefault
+                }
+                alt="Avatar"
+                className="w-9 h-6 rounded-full border"
+              />
+            </div>
+          ) : (
+            <button
+              onClick={() => navigate("/login")}
+              className="text-sm bg-blue-500 text-white px-3 py-1 rounded-md"
+            >
+              Đăng nhập
+            </button>
+          )}
         </div>
       </header>
 
@@ -152,19 +175,28 @@ const Header = () => {
             {/* Danh sách tùy chọn */}
             <div className="space-y-3">
               <button
-                onClick={() => navigate("/note/create")}
+                onClick={() => {
+                  navigate("/note/create");
+                  setShowModal(false); // Ẩn modal khi tạo note
+                }}
                 className="w-full bg-gray-200 text-black py-3 rounded-md hover:bg-gray-300 transition-colors"
               >
                 📒 Tạo Note
               </button>
               <button
-                onClick={() => navigate("/calendar/create")}
+                onClick={() => {
+                  navigate("/calendar/create");
+                  setShowModal(false); // Ẩn modal khi tạo calendar
+                }}
                 className="w-full bg-gray-200 text-black py-3 rounded-md hover:bg-gray-300 transition-colors"
               >
                 📅 Tạo Calendar
               </button>
               <button
-                onClick={() => navigate("/task/create")}
+                onClick={() => {
+                  navigate("/task/create");
+                  setShowModal(false); // Ẩn modal khi tạo task
+                }}
                 className="w-full bg-gray-200 text-black py-3 rounded-md hover:bg-gray-300 transition-colors"
               >
                 ✅ Tạo Task
