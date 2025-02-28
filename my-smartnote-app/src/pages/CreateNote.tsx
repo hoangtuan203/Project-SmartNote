@@ -8,6 +8,7 @@ import EmojiPicker from "emoji-picker-react";
 // } from "@radix-ui/react-dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Plus, Image, MessageCircle, X, Paperclip, Send } from "lucide-react";
+import SlashCommand from "@/components/note/Slash_Command";
 
 interface Comment {
   id: number;
@@ -32,6 +33,38 @@ export default function CreateNote() {
 
   const [isCommentBoxVisible, setIsCommentBoxVisible] = useState(false);
   const commentBoxRef = useRef<HTMLDivElement>(null);
+
+  //event key "/"
+  const [content, setContent] = useState("");
+  
+  const [isSlashCommandVisible, setIsSlashCommandVisible] = useState(false);
+  const [slashCommandPosition, setSlashCommandPosition] = useState({ top: 0, left: 0  });
+  const editorRef = useRef<HTMLDivElement>(null);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "/") {
+      e.preventDefault(); // Ngăn nhập ký tự "/"
+      updateSlashCommandPosition();
+      setIsSlashCommandVisible(true);
+    } else if (e.key === "Escape") {
+      setIsSlashCommandVisible(false);
+    }
+  };
+
+  // Xác định vị trí SlashCommand dựa trên vị trí con trỏ
+  const updateSlashCommandPosition = () => {
+    if (editorRef.current) {
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
+
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+
+      setSlashCommandPosition({
+        top: rect.bottom + window.scrollY + 20, // Dưới dấu "/"
+        left: rect.left + window.scrollX - 5, // Căn chỉnh vị trí
+      });
+    }
+  };
 
   // Ẩn comment box khi bấm ra ngoài
   useEffect(() => {
@@ -310,9 +343,18 @@ export default function CreateNote() {
       )}
       {/* Khu vực soạn thảo ghi chú */}
       <div
+        ref={editorRef}
         contentEditable={true}
-        className="w-full min-h-80 mt-5 p-4 text-lg outline-none rounded-md"
+        className="w-full min-h-80 mt-5 p-4 text-lg outline-none rounded-md  "
+        onKeyDown={handleKeyDown}
       />
+
+      {/* Hiển thị SlashCommand tại vị trí con trỏ */}
+      {isSlashCommandVisible && (
+        <div style={{ position: "absolute", top: slashCommandPosition.top, left: slashCommandPosition.left }}>
+          <SlashCommand content={content} setContent={setContent} />
+        </div>
+      )}
     </div>
   );
 }

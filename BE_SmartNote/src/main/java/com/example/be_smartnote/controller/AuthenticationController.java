@@ -157,7 +157,7 @@ public class AuthenticationController {
             Map<String, Object> userInfo = getUserInfoFromFacebook(accessToken);
 
             // 3. Lấy thông tin người dùng từ email
-            String email = (String) userInfo.get("email");
+                        String email = (String) userInfo.get("email");
             String name = (String) userInfo.get("name");
             String picture = (String) userInfo.get("picture");
             // Kiểm tra xem người dùng đã tồn tại trong database chưa
