@@ -6,23 +6,28 @@ import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.time.Instant;
+
 @Getter
 @Setter
 @Entity
-@Table(name = "task_assignees")
-public class TaskAssignee {
+@Table(name = "recent_notes")
+public class RecentNote {
     @Id
     @Column(name = "id", nullable = false)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "task_id", nullable = false)
-    private Task task;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "note_id", nullable = false)
+    private Note note;
+
+    @Column(name = "last_opened", nullable = false)
+    private Instant lastOpened;
 
 }

@@ -14,7 +14,6 @@ import java.time.Instant;
 @Table(name = "labels")
 public class Label {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 

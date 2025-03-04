@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaSun,
   FaMoon,
@@ -16,12 +16,28 @@ import { GoTasklist } from "react-icons/go";
 import { FaRegNoteSticky } from "react-icons/fa6";
 import { GrHomeRounded } from "react-icons/gr";
 import Logo from "../../assets/logo.png";
-
+import { fetchRecentNotes } from "@/service/RecentNote";
+import { RecentNote } from "@/service/RecentNote";
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isPrivateOpen, setIsPrivateOpen] = useState(false);
+  const [recentNotes, setRecentNotes] = useState<RecentNote[]>([]);
   const { darkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadRecentNotes = async () => {
+      try {
+        const notes = await fetchRecentNotes(5); // Lấy 5 ghi chú gần nhất
+        console.log("Recent notes fetched:", notes);
+        setRecentNotes(notes);
+      } catch (error) {
+        console.error("Failed to fetch recent notes:", error);
+      }
+    };
+
+    loadRecentNotes();
+  }, []);
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
   const togglePrivateSection = () => setIsPrivateOpen(!isPrivateOpen);
@@ -32,8 +48,6 @@ const Sidebar = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
-
-  // const username = localStorage.getItem("username");
 
   return (
     <div
@@ -129,29 +143,25 @@ const Sidebar = () => {
               />
             )}
           </button>
+
           {isPrivateOpen && (
             <ul className="ml-4 mt-2 space-y-2">
-              {[
-                { path: "/private/documents", label: "Documents" },
-                { path: "/private/photos", label: "Photos" },
-                { path: "/private/settings", label: "Settings" },
-              ].map(({ path, label }) => (
-                <li key={path}>
-                  <NavLink
-                    to={path}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 p-2 rounded-md transition-all 
-                      ${
-                        isActive
-                          ? "bg-blue-500 text-white"
-                          : "hover:bg-gray-300 dark:hover:bg-gray-700"
-                      }`
-                    }
-                  >
-                    {!isCollapsed && <span>{label}</span>}
-                  </NavLink>
+              {recentNotes.length > 0 ? (
+                recentNotes.map((note) => (
+                  <li key={note.noteId}>
+                    <button
+                      onClick={() => navigate(`/note/${note.noteId}`)} // Điều hướng khi bấm vào note
+                      className="flex items-center gap-3 p-2 rounded-md transition-all hover:bg-gray-300 dark:hover:bg-gray-700 w-full text-left"
+                    >
+                      {!isCollapsed && <span>{note.note_title}</span>}
+                    </button>
+                  </li>
+                ))
+              ) : (
+                <li className="text-sm text-gray-500 dark:text-gray-400">
+                  {!isCollapsed && "No recent notes"}
                 </li>
-              ))}
+              )}
             </ul>
           )}
         </div>

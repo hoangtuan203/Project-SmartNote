@@ -9,7 +9,7 @@ import EmojiPicker from "emoji-picker-react";
 import { Button } from "@/components/ui/button";
 import { Plus, Image, MessageCircle, X, Paperclip, Send } from "lucide-react";
 import SlashCommand from "@/components/note/Slash_Command";
-
+import TiptapEditor from "@/components/note/TiptapEditor";
 interface Comment {
   id: number;
   user: string;
@@ -34,12 +34,35 @@ export default function CreateNote() {
   const [isCommentBoxVisible, setIsCommentBoxVisible] = useState(false);
   const commentBoxRef = useRef<HTMLDivElement>(null);
 
-  //event key "/"
   const [content, setContent] = useState("");
-  
+
   const [isSlashCommandVisible, setIsSlashCommandVisible] = useState(false);
-  const [slashCommandPosition, setSlashCommandPosition] = useState({ top: 0, left: 0  });
+  const [slashCommandPosition, setSlashCommandPosition] = useState({
+    top: 0,
+    left: 0,
+  });
   const editorRef = useRef<HTMLDivElement>(null);
+  const [isEditorVisible, setIsEditorVisible] = useState(false);
+  const [editorPosition, setEditorPosition] = useState({ top: 0, left: 0 });
+
+  //event mouse up
+  const handleMouseUp = () => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim() !== "") {
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+
+      setEditorPosition({
+        top: rect.top + window.scrollY + 30, // Hiển thị ngay dưới chữ bôi đen
+        left: rect.left + window.scrollX,
+      });
+
+      setIsEditorVisible(true);
+    } else {
+      setIsEditorVisible(false);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "/") {
       e.preventDefault(); // Ngăn nhập ký tự "/"
@@ -341,17 +364,36 @@ export default function CreateNote() {
           </div>
         </div>
       )}
-      {/* Khu vực soạn thảo ghi chú */}
+
       <div
         ref={editorRef}
         contentEditable={true}
-        className="w-full min-h-80 mt-5 p-4 text-lg outline-none rounded-md  "
-        onKeyDown={handleKeyDown}
+        className="w-full min-h-80 mt-5 p-4 text-lg outline-none rounded-md "
+        onMouseUp={handleMouseUp} // Bắt sự kiện bôi đen
       />
+
+      {/* Hiển thị TiptapEditor khi bôi đen chữ */}
+      {isEditorVisible && (
+        <div
+          className="absolute bg-white shadow-md rounded-md p-2 border "
+          style={{
+            top: editorPosition.top,
+            left: editorPosition.left,
+          }}
+        >
+          <TiptapEditor />
+        </div>
+      )}
 
       {/* Hiển thị SlashCommand tại vị trí con trỏ */}
       {isSlashCommandVisible && (
-        <div style={{ position: "absolute", top: slashCommandPosition.top, left: slashCommandPosition.left }}>
+        <div
+          style={{
+            position: "absolute",
+            top: slashCommandPosition.top,
+            left: slashCommandPosition.left,
+          }}
+        >
           <SlashCommand content={content} setContent={setContent} />
         </div>
       )}

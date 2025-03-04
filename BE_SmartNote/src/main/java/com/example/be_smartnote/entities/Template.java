@@ -14,7 +14,6 @@ import java.time.Instant;
 @Table(name = "templates")
 public class Template {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 

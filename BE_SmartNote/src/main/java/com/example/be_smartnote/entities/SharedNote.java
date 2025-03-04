@@ -14,7 +14,6 @@ import java.time.Instant;
 @Table(name = "shared_notes")
 public class SharedNote {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 
