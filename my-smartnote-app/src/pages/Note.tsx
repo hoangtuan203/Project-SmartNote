@@ -3,7 +3,10 @@ import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { useTheme } from "@/context/ThemeContext";
 import { fetchNotes, Note } from "@/service/NoteService"; // Import hàm gọi API
 import { useNavigate } from "react-router-dom";
+import { MoreVertical } from "lucide-react"; // Import icon menu 3 chấm
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
+import { Button } from "@/components/ui/button";
 function NoteComponent() {
   const { darkMode } = useTheme();
   const [notes, setNotes] = useState<Note[]>([]);
@@ -16,29 +19,28 @@ function NoteComponent() {
     navigate(`/note/${id}`);
   };
 
+  const colorMap: Record<string, string> = {
+    red: "bg-red-500",
+    blue: "bg-blue-500",
+    green: "bg-green-500",
+    yellow: "bg-yellow-500",
+  };
+
+  const loadNotes = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchNotes(1, 10);
+      setNotes(data);
+    } catch (error) {
+      console.error("Failed to load notes:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadNotes = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchNotes(1, 10); // Lấy 10 ghi chú từ API
-        setNotes(data);
-
-        console.log(
-          "Notes Color List:",
-          data.map((note) => note.createdAt)
-        );
-
-        setFavorites(data.filter((note) => note.is_pinned));
-      } catch (error) {
-        console.error("Failed to load notes:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadNotes();
+    loadNotes(); // Gọi API lần đầu
   }, []);
-
   const toggleFavorite = (id: number) => {
     const updatedNotes = notes.map((note) => {
       if (note.noteId === id) {
@@ -68,21 +70,75 @@ function NoteComponent() {
           {favorites.length > 0 ? (
             favorites.map((note) => (
               <div
-              key={note.noteId}
-              className={`p-4 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 ${
-                darkMode ? "bg-gray-800 text-white" : "bg-white text-black"
-              }`}
-              onDoubleClick={() => handleDoubleClick(note.noteId)} 
-            >
-                <h2 className="text-xl font-semibold flex items-center">
-                  {note.is_pinned && (
-                    <span className="text-yellow-400 font-bold">📌</span>
-                  )}
-                  {note.title}
-                </h2>
-                <p className="text-gray-400">{note.content}</p>
-                <div className="text-right text-sm text-gray-500">
-                  <span>{note.color || "No Color"}</span>
+                key={note.noteId}
+                className={`rounded-md shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden ${
+                  darkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+                }`}
+                onDoubleClick={() => handleDoubleClick(note.noteId)}
+              >
+              <div
+                className={`flex justify-between items-center py-2 px-4 font-semibold text-black ${
+                  colorMap[note.color] || "bg-gray-500"
+                }`}
+              >
+                {note.title}
+                {/* Dropdown menu */}
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="text-white" />
+                    </Button>
+                  </DropdownMenu.Trigger>
+
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content className="bg-white shadow-lg rounded-md p-2 min-w-[150px]">
+                      <DropdownMenu.Item
+                        className="px-2 py-1 hover:bg-gray-100 cursor-pointer rounded"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Ngăn chặn event click vào Card
+                          console.log("Chỉnh sửa note:", note.noteId);
+                        }}
+                      >
+                        ✏️ Chỉnh sửa
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        className="px-2 py-1 hover:bg-red-100 text-red-500 cursor-pointer rounded"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Ngăn chặn event click vào Card
+                          console.log("Xóa note:", note.noteId);
+                        }}
+                      >
+                        🗑️ Xóa
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
+              </div>
+
+                <div className="p-4">
+                  <p className="text-gray-400">{note.content}</p>
+
+                  {/* 🕒 Hiển thị ngày tạo ghi chú */}
+                  <div className="flex items-center text-sm text-red-500 mt-2">
+                    🕑
+                    {new Date(note.createdAt).toLocaleString()}
+                  </div>
+                  <div className="flex justify-end items-center mt-2">
+                    <button
+                      className="text-xl"
+                      onClick={() => toggleFavorite(note.noteId)}
+                    >
+                      {note.is_pinned ? (
+                        <FaHeart className="text-red-500" />
+                      ) : (
+                        <FaRegHeart className="text-gray-400" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
@@ -101,41 +157,79 @@ function NoteComponent() {
 
       {/* Tất cả Ghi chú */}
       <div>
-        <h2 className="text-xl font-semibold mb-2">All Notes</h2>
+        <h2 className="text-xl  font-semibold mb-6 ">All Notes</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {notes.map((note) => (
             <div
               key={note.noteId}
-              className={`p-4 rounded-md shadow-lg hover:shadow-xl transition-all duration-300 ${
+              className={`rounded-md shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden ${
                 darkMode ? "bg-gray-800 text-white" : "bg-white text-black"
               }`}
-
-              onDoubleClick={() => handleDoubleClick(note.noteId)} 
+              onDoubleClick={() => handleDoubleClick(note.noteId)}
             >
-              <h2 className="text-xl font-semibold flex items-center">
-                {note.is_pinned && (
-                  <span className="text-yellow-400 font-bold mr-1">📌</span>
-                )}
+              <div
+                className={`flex justify-between items-center py-2 px-4 font-semibold text-black ${
+                  colorMap[note.color] || "bg-gray-500"
+                }`}
+              >
                 {note.title}
-              </h2>
-              <p className="text-gray-400">{note.content}</p>
+                {/* Dropdown menu */}
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="text-white" />
+                    </Button>
+                  </DropdownMenu.Trigger>
 
-              {/* 🕒 Hiển thị ngày tạo ghi chú */}
-              <div className="text-sm text-red-500 mt-2">
-                Created: {new Date(note.createdAt).toLocaleString()}
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content className="bg-white shadow-lg rounded-md p-2 min-w-[150px]">
+                      <DropdownMenu.Item
+                        className="px-2 py-1 hover:bg-gray-100 cursor-pointer rounded"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Ngăn chặn event click vào Card
+                          console.log("Chỉnh sửa note:", note.noteId);
+                        }}
+                      >
+                        ✏️ Chỉnh sửa
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        className="px-2 py-1 hover:bg-red-100 text-red-500 cursor-pointer rounded"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Ngăn chặn event click vào Card
+                          console.log("Xóa note:", note.noteId);
+                        }}
+                      >
+                        🗑️ Xóa
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
               </div>
+              <div className="p-4">
+                <p className="text-gray-400">{note.content}</p>
 
-              <div className="flex justify-end items-center mt-2">
-                <button
-                  className="text-xl"
-                  onClick={() => toggleFavorite(note.noteId)}
-                >
-                  {note.is_pinned ? (
-                    <FaHeart className="text-red-500" />
-                  ) : (
-                    <FaRegHeart className="text-gray-400" />
-                  )}
-                </button>
+                {/* 🕒 Hiển thị ngày tạo ghi chú */}
+                <div className="flex items-center text-sm text-red-500 mt-2">
+                  🕑
+                  {new Date(note.createdAt).toLocaleString()}
+                </div>
+
+                <div className="flex justify-end items-center mt-2">
+                  <button
+                    className="text-xl"
+                    onClick={() => toggleFavorite(note.noteId)}
+                  >
+                    {note.is_pinned ? (
+                      <FaHeart className="text-red-500" />
+                    ) : (
+                      <FaRegHeart className="text-gray-400" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           ))}
