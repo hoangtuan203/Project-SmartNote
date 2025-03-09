@@ -20,7 +20,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     Page<Task> findAllByPageable(Pageable pageable);
 
     @Query("SELECT t FROM Task t WHERE t.dueDate BETWEEN :now AND :notifyThreshold AND t.isNotified = 0")
-    List<Task> findByDueDateBetweenAndIsNotifiedFalse(@Param("now") Instant now,
-                                                      @Param("notifyThreshold") Instant notifyThreshold);
+    List<Task> findByDueDateBetweenAndIsNotifiedFalse(@Param("now") LocalDateTime now,
+                                                      @Param("notifyThreshold") LocalDateTime notifyThreshold);
 
 }

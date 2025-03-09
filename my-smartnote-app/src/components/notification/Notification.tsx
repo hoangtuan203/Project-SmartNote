@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { RiNotification2Line } from "react-icons/ri";
+import { Notification as NotificationType } from "@/service/NotificationService"; // Đổi tên để tránh trùng với component Notification
+
 interface NotificationProps {
-  notifications: { id: number; message: string; time: string }[];
+  notifications: NotificationType[]; // Sử dụng kiểu dữ liệu đã định nghĩa trong service
 }
 
 const Notification = ({ notifications }: NotificationProps) => {
   const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null); // Tạo ref cho dropdown
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

@@ -4,21 +4,16 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class TaskResponse {
-    Long taskId;
+public class NotificationResponse {
+    Long notificationId;
     Long userId;
-    String username;
-    String title;
-    String description;
-    LocalDateTime dueDate;
-    String status;
-    String priority;
-    Instant createAt;
+    String message;
+    Boolean isRead;
+    Instant createdAt;
 }

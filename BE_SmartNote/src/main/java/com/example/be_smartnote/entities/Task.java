@@ -7,6 +7,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 
 @Getter
@@ -30,8 +31,8 @@ public class Task {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "due_date", columnDefinition = "TIMESTAMP WITHOUT TIME ZONE")
-    private Instant dueDate;
+    @Column(name = "due_date")
+    private LocalDateTime dueDate;
 
 
     @Lob

@@ -6,8 +6,13 @@ import AvatarDefault from "../../assets/avatar_default.png";
 import Notification from "../notification/Notification";
 import { IoAddSharp } from "react-icons/io5";
 import { IoArrowBack, IoArrowForward } from "react-icons/io5";
+import { Notification as NotificationType, ListNotification } from "@/service/NotificationService";
 
 const Header = () => {
+  const [notification, setNotification] = useState<NotificationType[]>([]);
+
+
+
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -18,7 +23,7 @@ const Header = () => {
   const avatarUser = localStorage.getItem("avatar") || "/default-avatar.png"; // Ảnh mặc định nếu không có
 
   // State lưu thông tin user
-  const [user, setUser] = useState({
+  const [user,        ] = useState({
     email: emailUser,
     avatar: avatarUser,
   });
@@ -77,11 +82,21 @@ const Header = () => {
     },
   ];
 
-  const notifications = [
-    { id: 1, message: "Bạn có một cuộc họp lúc 10h", time: "5 phút trước" },
-    { id: 2, message: "Nhiệm vụ mới: Hoàn thành báo cáo", time: "1 giờ trước" },
-    { id: 3, message: "Sự kiện sắp diễn ra", time: "Hôm nay" },
-  ];
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const data = await ListNotification(1,2);
+        console.log("Fetched notifications:", data);
+        setNotification(data);
+      } catch (error) {
+        console.error("Error loading notifications:", error);
+      }
+    };
+  
+    fetchNotifications();
+  }, []);
+  
 
   return (
     <>
@@ -126,7 +141,7 @@ const Header = () => {
           </button>
 
           {/* Thông báo */}
-          <Notification notifications={notifications} />
+          <Notification notifications={notification} />
 
           {user.email !== "Guest" ? (
             <div className="flex items-center gap-2">

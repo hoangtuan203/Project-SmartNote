@@ -23,6 +23,7 @@ import java.util.List;
 public class TaskService {
     private final TaskMapper taskMapper;
     private final TaskRepository taskRepository;
+    private NotificationService notificationService;
     public TaskService(TaskRepository taskRepository, TaskMapper taskMapper){
         this.taskRepository = taskRepository;
         this.taskMapper = taskMapper;
@@ -51,41 +52,34 @@ public class TaskService {
         }
     }
 
-    // Trả về danh sách task sắp hết hạn (trong vòng 1 giờ)
-//    @Transactional
-//    public List<Task> checkTasksForNotification() {
-//        Instant now = Instant.now();
-//        Instant notifyThreshold = now.plus(1, ChronoUnit.HOURS);
-//
-//        return taskRepository.findByDueDateBetweenAndIsNotifiedFalse(now, notifyThreshold);
-//    }
-
-
 
     @Transactional
     public List<Task> checkTasksForNotification() {
         ZoneId vietnamZone = ZoneId.of("Asia/Ho_Chi_Minh");
-        ZonedDateTime nowVietnam = ZonedDateTime.now(vietnamZone);
-        ZonedDateTime notifyThresholdVietnam = nowVietnam.plus(1, ChronoUnit.HOURS);
 
-        // Chuyển đổi về UTC để truy vấn DB
-        Instant now = nowVietnam.toInstant();
-        Instant notifyThreshold = notifyThresholdVietnam.toInstant();
+        // Lấy thời gian hiện tại và thời gian 1 giờ sau theo giờ Việt Nam
+        LocalDateTime nowVietnam = LocalDateTime.now(vietnamZone);
+        LocalDateTime notifyThresholdVietnam = nowVietnam.plusHours(1);
 
+        // Chuyển đổi sang Instant (UTC) để truy vấn DB
+        LocalDateTime now = nowVietnam.atZone(vietnamZone).toLocalDateTime();
+        LocalDateTime notifyThreshold = notifyThresholdVietnam.atZone(vietnamZone).toLocalDateTime();
 
-        System.out.println("🔎 Kiểm tra task từ (Việt Nam): " + now + " đến: " + notifyThreshold);
+        System.out.println("🔎 Kiểm tra task từ (Việt Nam): " + nowVietnam + " đến: " + notifyThresholdVietnam);
 
         List<Task> tasks = taskRepository.findByDueDateBetweenAndIsNotifiedFalse(now, notifyThreshold);
 
         System.out.println("📋 Tổng số task lấy được: " + tasks.size());
 
-
         return tasks;
     }
 
 
+
     private void sendNotification(Task task) {
-        System.out.println("🔔 Task sắp hết hạn: " + task.getTitle() + " (Deadline: " + task.getDueDate() + ")");
+        String message = "🔔 Task sắp hết hạn: " + task.getTitle() + " (Deadline: " + task.getDueDate() + ")";
+        notificationService.sendTaskNotification(message);
+        System.out.println(message);
     }
 
 }

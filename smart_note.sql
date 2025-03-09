@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th2 27, 2025 lúc 06:16 AM
+-- Thời gian đã tạo: Th3 09, 2025 lúc 04:08 AM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.0.30
 
@@ -100,6 +100,21 @@ CREATE TABLE `notes` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Đang đổ dữ liệu cho bảng `notes`
+--
+
+INSERT INTO `notes` (`id`, `user_id`, `title`, `content`, `is_pinned`, `color`, `created_at`, `updated_at`) VALUES
+(3, 3, 'Học lập trình Java Spring Boot', 'Back end là mọi thứ mà người dùng không nhìn thấy và chứa các hoạt động phía sau xảy ra khi thực hiện bất kỳ hành động nào trên một website, ứng dụng. Một lập trình viên back end xây dựng và duy trì', 0, 'red', '2025-03-04 07:05:34', '2025-03-04 07:05:34'),
+(4, 2, 'Chia công việc TKGD', '### **1. Thanh điều hướng (Header - Navigation Bar)**\r\n\r\n📍 **Vị trí:** Trên cùng trang web, hiển thị trên tất cả các trang.\r\n\r\n📍 **Chức năng:**\r\n\r\n- **Logo** (góc trái)\r\n- **Menu danh mục món ăn** (Pizza, Burger, Đồ ', 0, 'blue', '2025-03-04 07:06:19', '2025-03-04 15:23:03'),
+(5, 2, 'Đồ Án Chuyên Ngành', '- Token izer\r\n- Word Embedding\r\n- Postional Encoding\r\n- Anttention\r\n- Residinal + Norm', 0, 'green', '2025-03-04 07:07:13', '2025-03-04 15:23:07'),
+(6, 1, 'Used To ', '- Cấu trúc used to dạng khẳng định : S + used to + V_inf\r\n    \r\n    Ex:\r\n    \r\n    - **She used to dance ballet when she was a child.**\r\n    - **They used to travel to Europe every summer before the pandemic.**\r\n    - **He used to speak fluent F', 0, 'yellow', '2025-03-04 07:07:39', '2025-03-04 15:23:17'),
+(7, 1, 'Smart Project - Ứng dụng ghi chú', '### **1. Không gian làm việc tối giản**\r\n\r\n- Giao diện tập trung vào **dự án cá nhân** thay vì dạng **wiki** như Notion.\r\n- **Bảng điều khiển (Dashboard)** đơn giản, chỉ hiển thị **các dự án quan trọng** thay v', 0, 'red', '2025-03-04 07:08:03', '2025-03-04 15:23:20'),
+(8, 3, 'Lộ trình Spring boot + Microservices', 'Hiện nay kiến trúc Microservices đang là chủ đề được cộng đồng Developer vô cùng quan tâm. Bạn có thể tìm thấy khá nhiều tài nguyên giới thiệu và nói về tính chất cũng như lợi ích của Microservices tu', 0, 'red', '2025-03-04 07:09:50', '2025-03-04 15:23:22'),
+(9, 2, 'Tôi test 2', 'đây là content\r\n', 0, 'red', '2025-03-04 07:10:06', '2025-03-04 15:23:24'),
+(10, 2, 'Tiêu đề 4', 'content 5', 0, 'blue', '2025-03-04 07:10:28', '2025-03-04 15:23:27'),
+(11, 2, 'title 5', 'contnt 5', 0, 'orange', '2025-03-04 08:06:03', '2025-03-04 15:23:34');
+
 -- --------------------------------------------------------
 
 --
@@ -138,6 +153,27 @@ CREATE TABLE `notifications` (
   `message` tinytext NOT NULL,
   `is_read` tinyint(1) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `user_id`, `message`, `is_read`, `created_at`) VALUES
+(1, 3, 'Còn 1 tiếng nữa là đến hạn task 1', 0, '2025-03-08 09:38:32'),
+(2, 3, 'Còn 1 tiếng nữa là đến hạn task 2', 0, '2025-03-08 09:38:40');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `recent_notes`
+--
+
+CREATE TABLE `recent_notes` (
+  `id` bigint(20) NOT NULL,
+  `user_id` bigint(20) NOT NULL,
+  `note_id` bigint(20) NOT NULL,
+  `last_opened` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -183,8 +219,20 @@ CREATE TABLE `tasks` (
   `status` tinytext DEFAULT NULL,
   `priority` tinytext DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `is_notified` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `tasks`
+--
+
+INSERT INTO `tasks` (`id`, `user_id`, `title`, `description`, `due_date`, `status`, `priority`, `created_at`, `updated_at`, `is_notified`) VALUES
+(1, 1, 'Học tiếng Anh trong 30 ngày', 'Học grammar, vocabulary , làm bài tập cho từng cấu trúc ngữ pháp, luyện trên dictionary, luyện study4 and làm đề với mỗi part ...', '2025-03-31 20:50:05', 'Đang hoàn thành ', 'Trung Bình', '2025-03-04 13:51:53', '2025-03-04 16:19:49', 0),
+(2, 3, 'Đồ Án Chuyên Ngành', 'Thực hiện dự án website cá nhân sử dụng React Typescript + Spring Boot trong 10 tuần', '2025-04-25 20:52:48', 'Đang hoàn thành', 'Cao', '2025-03-04 13:54:16', '2025-03-04 16:19:53', 0),
+(3, 3, 'Làm Báo Cáo Chuyên Đề Seminar', 'Thực hiện nghiên cứu báo cáo về Neuron và network và nộp tiểu luận ở tuần 10', '2025-04-27 20:54:27', 'Chưa làm', 'Cao', '2025-03-04 13:55:49', '2025-03-04 16:19:55', 0),
+(4, 3, 'Thiết Kế Giao Diện', 'Xây dựng  Cho Website Bán Đồ Ăn Nhanh bằng Figma với các chức năng cần thiết cho người dùng và tối ưu UI/UX', '2025-05-09 20:56:01', 'Đang hoàn thành', 'Thấp', '2025-03-04 13:57:37', '2025-03-04 16:19:57', 0),
+(5, 3, 'test ', 'abcd', '2025-03-08 16:40:24', 'update', 'cao', '2025-03-04 16:32:24', '2025-03-08 08:51:21', 1);
 
 -- --------------------------------------------------------
 
@@ -300,6 +348,14 @@ ALTER TABLE `notifications`
   ADD KEY `user_id` (`user_id`);
 
 --
+-- Chỉ mục cho bảng `recent_notes`
+--
+ALTER TABLE `recent_notes`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_id` (`user_id`,`note_id`),
+  ADD KEY `note_id` (`note_id`);
+
+--
 -- Chỉ mục cho bảng `reminders`
 --
 ALTER TABLE `reminders`
@@ -376,7 +432,7 @@ ALTER TABLE `labels`
 -- AUTO_INCREMENT cho bảng `notes`
 --
 ALTER TABLE `notes`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT cho bảng `note_features`
@@ -394,7 +450,13 @@ ALTER TABLE `note_labels`
 -- AUTO_INCREMENT cho bảng `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT cho bảng `recent_notes`
+--
+ALTER TABLE `recent_notes`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT cho bảng `reminders`
@@ -412,7 +474,7 @@ ALTER TABLE `shared_notes`
 -- AUTO_INCREMENT cho bảng `tasks`
 --
 ALTER TABLE `tasks`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT cho bảng `task_assignees`
@@ -486,6 +548,13 @@ ALTER TABLE `note_labels`
 --
 ALTER TABLE `notifications`
   ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Các ràng buộc cho bảng `recent_notes`
+--
+ALTER TABLE `recent_notes`
+  ADD CONSTRAINT `recent_notes_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `recent_notes_ibfk_2` FOREIGN KEY (`note_id`) REFERENCES `notes` (`id`) ON DELETE CASCADE;
 
 --
 -- Các ràng buộc cho bảng `reminders`
