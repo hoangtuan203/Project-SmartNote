@@ -13,22 +13,25 @@ const GoogleCallback: React.FC = () => {
 
     if (code) {
       console.log("Google OAuth2 code received:", code);
-
+ 
       axios
-        .post<{ token: string; name: string; email: string; picture: string }>(
+        .post<{ token: string; name: string; email: string; picture: string; accessToken: string; userId: string }>(
           "http://localhost:8080/api/auth/oauth2/callback/google",
           { code },
           { headers: { "Content-Type": "application/json" } }
         )
         .then((response) => {
           console.log("Response from backend:", response.data);
+          console.log("token access:", response.data.accessToken)
           toast.success("Login successful!");
 
-          const { token, name, email, picture } = response.data;
+          const { token, name, email, picture, accessToken, userId } = response.data;
           localStorage.setItem("token", token);
           localStorage.setItem("username", name);
           localStorage.setItem("email", email);
           localStorage.setItem("avatar", picture);
+          localStorage.setItem("accessToken", accessToken);
+          localStorage.setItem("userId", userId);
 
           setTimeout(() => {
             navigate("/"); // Chuyển hướng sau 1 giây

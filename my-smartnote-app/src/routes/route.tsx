@@ -17,7 +17,7 @@ const publicRoutes = [
   { path: "/calendar", component: Calendar, layout: DefaultLayout },
   { path: "/note", component: Note, layout: DefaultLayout },
   { path: "/task", component: Task, layout: DefaultLayout },
-  { path: "/task/createTask", component: CreateTask, layout: DefaultLayout },
+  { path: "/task/create", component: CreateTask, layout: DefaultLayout },
   { path: "/login", component: LoginPage, layout: LoginLayout },
   { path: "/private/documents", component: Private, layout: DefaultLayout },
   { path: "/trash", component: Trash, layout: DefaultLayout },
@@ -25,6 +25,8 @@ const publicRoutes = [
   { path: "/oauth2/redirect", component: GoogleCallback, layout: null },
   { path: "/oauth2/callback/facebook", component: FacebookCallback, layout: null },
   { path: "/note/:id", component: CreateNote, layout: DefaultLayout },
+  { path: "/task/:id", component: CreateTask, layout: DefaultLayout },
+
 ];
 
 export default publicRoutes;

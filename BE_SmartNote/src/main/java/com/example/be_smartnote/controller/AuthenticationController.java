@@ -55,7 +55,6 @@ public class AuthenticationController {
                 .build();
     }
 
-
     @PostMapping("/oauth2/callback/google")
     public ResponseEntity<?> handleGoogleCallback(@RequestBody Map<String, String> body) {
         String code = body.get("code");
@@ -66,7 +65,7 @@ public class AuthenticationController {
         try {
             // 1. Lấy access token từ Google
             String accessToken = getAccessTokenFromCode(code);
-
+            log.info("access token : {}", accessToken);
             // 2. Lấy thông tin người dùng từ Google
             Map<String, Object> userInfo = getUserInfoFromGoogle(accessToken);
 
@@ -85,11 +84,14 @@ public class AuthenticationController {
                 // Nếu đã tồn tại, tạo token và trả về thông tin
                 AuthenticationService.TokenInfo tokenInfo = authenticationService.generateToken(existingUser.get());
                 return ResponseEntity.ok(Map.of(
+                        "userId", existingUser.get().getId(),
                         "token", tokenInfo.token(),
                         "expiryTime", tokenInfo.expiryDate(),
                         "email", email,
                         "name", existingUser.get().getFullName(),
-                        "picture", picture
+                        "picture", picture,
+                        "accessToken", accessToken
+
                 ));
             }
 
@@ -109,7 +111,9 @@ public class AuthenticationController {
 
             // 6. Trả về token và thông tin người dùng
             return ResponseEntity.ok(Map.of(
+                    "userId", newUser.getId(),
                     "token", tokenInfo.token(),
+                    "accessToken", accessToken,
                     "expiryTime", tokenInfo.expiryDate(),
                     "email", email,
                     "name", name,
@@ -170,7 +174,8 @@ public class AuthenticationController {
                         "token", tokenInfo.token(),
                         "email", email,
                         "name", existingUser.get().getFullName(),
-                        "picture", picture
+                        "picture", picture,
+                        "accessToken", accessToken
                 ));
             }
 
@@ -190,6 +195,7 @@ public class AuthenticationController {
             // 6. Trả về token và thông tin người dùng
             return ResponseEntity.ok(Map.of(
                     "token", tokenInfo.token(),
+                    "accessToken", accessToken,
                     "email", email,
                     "name", name,
                     "picture", picture

@@ -25,6 +25,9 @@ spring:
             scope:
               - email
               - profile
+              - https://www.googleapis.com/auth/calendar
+              - https://www.googleapis.com/auth/calendar.events
+              - https://www.googleapis.com/auth/calendar.readonly
 
           facebook:
             client-id: ${FACEBOOK_CLIENT_ID}

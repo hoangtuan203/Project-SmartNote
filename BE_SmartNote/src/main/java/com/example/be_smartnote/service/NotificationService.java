@@ -13,6 +13,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+
 @Service
 public class NotificationService {
     private final NotificationMapper notificationMapper;
@@ -24,8 +26,23 @@ public class NotificationService {
         this.notificationRepository = notificationRepository;
     }
 
-    public void sendTaskNotification(String message) {
-        messagingTemplate.convertAndSend("/api/notifications", message);
+    public void sendTaskNotification(Task task) {
+        String message = "Còn 1 tiếng nữa là đến hạn task: " + task.getTitle();
+
+        // 🔹 Tạo thông báo mới
+        Notification notification = new Notification();
+        notification.setMessage(message);
+        notification.setIsRead(false);
+        notification.setCreatedAt(Instant.now());
+        notification.setUser(task.getUser()); // Gán user cho thông báo
+
+        // 🔹 Lưu vào database
+        notificationRepository.save(notification);
+
+        // 🔹 Gửi thông báo qua WebSocket
+        messagingTemplate.convertAndSend("/api/notifications", notificationMapper.toNotificationResponse(notification));
+
+        System.out.println("📢 Gửi thông báo: " + message);
     }
 
     public NotificationResponseWrapper getListNotification(Pageable pageable){

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
-    @Query("select n from Notification n join User u on n.user.id = u.id")
+    @Query("select n from Notification n join User u on n.user.id = u.id order by n.createdAt desc ")
     Page<Notification> findAllByPageable(Pageable pageable);
 
 }

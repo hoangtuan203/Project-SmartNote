@@ -46,6 +46,7 @@ const Sidebar = () => {
     localStorage.removeItem("email");
     localStorage.removeItem("avatar");
     localStorage.removeItem("token");
+    localStorage.removeItem("accessToken");
     navigate("/login");
   };
 

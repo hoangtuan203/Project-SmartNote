@@ -82,21 +82,22 @@ const Header = () => {
     },
   ];
 
-
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const data = await ListNotification(1,2);
-        console.log("Fetched notifications:", data);
-        setNotification(data);
+        const notifications = await ListNotification(1, 5); // Lấy 5 thông báo mới nhất
+        console.log("Fetched notifications:", notifications);
+        setNotification(notifications);
       } catch (error) {
-        console.error("Error loading notifications:", error);
+        console.error("Failed to fetch notifications", error);
       }
     };
   
     fetchNotifications();
   }, []);
   
+
+
 
   return (
     <>

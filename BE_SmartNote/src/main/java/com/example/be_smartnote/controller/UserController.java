@@ -16,13 +16,13 @@ public class UserController {
     @PostMapping("/createUser")
     public ApiResponse<UserResponse> createUser(@RequestBody UserRequest request) {
         var result = userService.createUser(request);
-        return new ApiResponse<>(1000, "sucess", result);
+        return new ApiResponse<>(1000, "success", result);
     }
 
     @GetMapping("/getUserById")
     public ApiResponse<UserResponse> getUserById(@PathVariable Long id) {
         var result = userService.getUserById(id);
 
-        return new ApiResponse<>(1000, "sucess", result);
+        return new ApiResponse<>(1000, "success", result);
     }
 }

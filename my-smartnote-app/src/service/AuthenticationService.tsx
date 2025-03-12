@@ -66,8 +66,8 @@ export const handleOAuthCallback = async (
   provider: string,
   code: string
 ): Promise<OAuthResponse> => {
+  console.log("OAuth code received:", code);
 
-  console.log("code ", code)
   try {
     const response = await httpRequest.post<OAuthResponse>(
       `/auth/oauth2/callback/${provider}`,

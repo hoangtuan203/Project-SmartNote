@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Calendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -10,6 +10,7 @@ import { DatePickerComponent } from "./DatePickerComponent";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { fetchHolidays, HolidayEvent } from "@/service/CalendarService";
 
 interface Task {
   id: number;
@@ -25,17 +26,11 @@ interface CalendarComponentProps {
 }
 
 const CalendarComponent: React.FC<CalendarComponentProps> = ({ tasks }) => {
-  const [calendarEvents, setCalendarEvents] = useState<
-    {
-      id: string;
-      title: string;
-      start: string;
-      color: string;
-      description: string;
-    }[]
-  >([]);
+  const [calendarEvents, setCalendarEvents] = useState<HolidayEvent[]>([]);
   const [newEventTitle, setNewEventTitle] = useState("");
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const accessToken = localStorage.getItem("accessToken");
+  const calendarRef = useRef<Calendar | null>(null);
 
   // Lấy màu sắc theo mức độ ưu tiên
   const getPriorityColor = (priority: string, completed: boolean) => {
@@ -61,6 +56,20 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ tasks }) => {
     }
   }, [tasks]);
 
+  useEffect(() => {
+    const loadHolidays = async () => {
+      if (accessToken) {
+        console.log("access token", accessToken);
+        const holidays = await fetchHolidays(accessToken);
+        setCalendarEvents((prev) => [...prev, ...holidays]);
+      } else {
+        console.error("Lỗi: Không tìm thấy access token!");
+      }
+    };
+
+    loadHolidays();
+  }, []);
+
   const addEvent = () => {
     if (newEventTitle && selectedDate) {
       const newEvent = {
@@ -76,12 +85,17 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ tasks }) => {
     }
   };
 
+  const handleViewChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newView = event.target.value;
+    if (calendarRef.current) {
+      calendarRef.current.getApi().changeView(newView);
+    }
+  };
+
   return (
     <div className="p-6 bg-white dark:bg-gray-900 shadow-lg rounded-lg">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
-          📅 Lịch Công Việc
-        </h2>
+        
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="default">Thêm sự kiện</Button>
@@ -104,10 +118,23 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ tasks }) => {
               Thêm
             </Button>
           </DialogContent>
+          <div className="flex justify-between items-center mb-2">
+           
+            <select
+              className="border rounded-md p-1"
+              onChange={handleViewChange}
+              defaultValue="dayGridMonth"
+            >
+              <option value="dayGridMonth">Tháng</option>
+              <option value="timeGridWeek">Tuần</option>
+              <option value="timeGridDay">Ngày</option>
+            </select>
+          </div>
         </Dialog>
       </div>
 
       <Calendar
+        ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
         events={calendarEvents}
@@ -127,7 +154,7 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ tasks }) => {
         headerToolbar={{
           left: "prev,next today",
           center: "title",
-          right: "dayGridMonth,timeGridWeek,timeGridDay",
+          right: "",
         }}
         height="auto"
         timeZone="Asia/Ho_Chi_Minh"

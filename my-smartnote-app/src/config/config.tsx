@@ -5,5 +5,5 @@ export const OAuthConfig = {
 };
 export const FacebookConfig = {
   appId: "1695819107932744",
-  callbackUrl: "http://localhost:3000/oauth2/callback/facebook",
-}
+  callbackUrl: "http://localhost:5173/oauth2/callback/facebook",
+};

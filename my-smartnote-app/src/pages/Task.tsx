@@ -32,7 +32,7 @@ export default function TaskPage() {
         <h1 className="text-2xl font-bold ml-4">Quản lý Công Việc</h1>
         <Button 
           className="bg-blue-500 mr-4 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-          onClick={() => navigate("/task/createTask")} // ✅ Chuyển đến trang /createTask
+          onClick={() => navigate("/task/create")} // ✅ Chuyển đến trang /createTask
         >
           + Thêm Công Việc
         </Button>

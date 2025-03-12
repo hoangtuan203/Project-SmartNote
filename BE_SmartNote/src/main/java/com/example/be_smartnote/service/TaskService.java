@@ -1,11 +1,17 @@
 package com.example.be_smartnote.service;
 
+import com.example.be_smartnote.dto.request.TaskRequest;
 import com.example.be_smartnote.dto.response.TaskResponse;
 import com.example.be_smartnote.dto.response.TaskResponseWrapper;
 import com.example.be_smartnote.entities.Task;
+import com.example.be_smartnote.entities.User;
+import com.example.be_smartnote.exception.AppException;
+import com.example.be_smartnote.exception.ErrorCode;
 import com.example.be_smartnote.mapper.TaskMapper;
 import com.example.be_smartnote.repository.TaskRepository;
+import com.example.be_smartnote.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -16,17 +22,22 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.List;
-
+@Slf4j
 @Service
 @Transactional
 public class TaskService {
     private final TaskMapper taskMapper;
     private final TaskRepository taskRepository;
-    private NotificationService notificationService;
-    public TaskService(TaskRepository taskRepository, TaskMapper taskMapper){
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
+    public TaskService(TaskRepository taskRepository, TaskMapper taskMapper, NotificationService notificationService,
+                       UserRepository userRepository){
         this.taskRepository = taskRepository;
         this.taskMapper = taskMapper;
+        this.notificationService = notificationService;
+        this.userRepository = userRepository;
     }
 
     //get all and pagination
@@ -57,11 +68,9 @@ public class TaskService {
     public List<Task> checkTasksForNotification() {
         ZoneId vietnamZone = ZoneId.of("Asia/Ho_Chi_Minh");
 
-        // Lấy thời gian hiện tại và thời gian 1 giờ sau theo giờ Việt Nam
         LocalDateTime nowVietnam = LocalDateTime.now(vietnamZone);
         LocalDateTime notifyThresholdVietnam = nowVietnam.plusHours(1);
 
-        // Chuyển đổi sang Instant (UTC) để truy vấn DB
         LocalDateTime now = nowVietnam.atZone(vietnamZone).toLocalDateTime();
         LocalDateTime notifyThreshold = notifyThresholdVietnam.atZone(vietnamZone).toLocalDateTime();
 
@@ -77,9 +86,29 @@ public class TaskService {
 
 
     private void sendNotification(Task task) {
-        String message = "🔔 Task sắp hết hạn: " + task.getTitle() + " (Deadline: " + task.getDueDate() + ")";
-        notificationService.sendTaskNotification(message);
-        System.out.println(message);
+       notificationService.sendTaskNotification(task);
     }
 
+    //create task
+    public TaskResponse createTask(TaskRequest request){
+
+        log.info("User id : {}", request.getUserId());
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        Task newTask = taskMapper.toUser(request);
+        newTask.setUser(user);
+        newTask.setTitle(request.getTitle());
+        newTask.setDescription(request.getDescription());
+        newTask.setStatus(request.getStatus());
+        newTask.setPriority(request.getPriority());
+        newTask.setDueDate(request.getDueDate());
+        newTask.setIsNotified(0);
+        newTask.setCreatedAt(new Date().toInstant());
+        newTask.setUpdatedAt(new Date().toInstant());
+
+        taskRepository.save(newTask);
+
+        return taskMapper.toTaskResponse(newTask);
+    }
 }
