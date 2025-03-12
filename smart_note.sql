@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th3 09, 2025 lúc 04:08 AM
+-- Thời gian đã tạo: Th3 12, 2025 lúc 04:25 PM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.0.30
 
@@ -113,7 +113,8 @@ INSERT INTO `notes` (`id`, `user_id`, `title`, `content`, `is_pinned`, `color`, 
 (8, 3, 'Lộ trình Spring boot + Microservices', 'Hiện nay kiến trúc Microservices đang là chủ đề được cộng đồng Developer vô cùng quan tâm. Bạn có thể tìm thấy khá nhiều tài nguyên giới thiệu và nói về tính chất cũng như lợi ích của Microservices tu', 0, 'red', '2025-03-04 07:09:50', '2025-03-04 15:23:22'),
 (9, 2, 'Tôi test 2', 'đây là content\r\n', 0, 'red', '2025-03-04 07:10:06', '2025-03-04 15:23:24'),
 (10, 2, 'Tiêu đề 4', 'content 5', 0, 'blue', '2025-03-04 07:10:28', '2025-03-04 15:23:27'),
-(11, 2, 'title 5', 'contnt 5', 0, 'orange', '2025-03-04 08:06:03', '2025-03-04 15:23:34');
+(11, 2, 'title 5', 'contnt 5', 0, 'orange', '2025-03-04 08:06:03', '2025-03-04 15:23:34'),
+(12, 3, 'abc', 'aa', 0, 'blue', '2025-03-12 09:25:29', '2025-03-12 09:25:29');
 
 -- --------------------------------------------------------
 
@@ -161,7 +162,14 @@ CREATE TABLE `notifications` (
 
 INSERT INTO `notifications` (`id`, `user_id`, `message`, `is_read`, `created_at`) VALUES
 (1, 3, 'Còn 1 tiếng nữa là đến hạn task 1', 0, '2025-03-08 09:38:32'),
-(2, 3, 'Còn 1 tiếng nữa là đến hạn task 2', 0, '2025-03-08 09:38:40');
+(2, 3, 'Còn 1 tiếng nữa là đến hạn task 2', 0, '2025-03-08 09:38:40'),
+(3, 3, 'thông báo 3', 0, '2025-03-09 06:20:41'),
+(4, 3, 'Còn 1 tiếng nữa là đến hạn task: test ', 0, '2025-03-08 22:45:26'),
+(5, 3, 'Còn 1 tiếng nữa là đến hạn task: Học Spring Boot Kafla', 0, '2025-03-12 02:21:09'),
+(6, 3, 'Còn 1 tiếng nữa là đến hạn task: Học Spring Boot Cloud Api GateWay', 0, '2025-03-12 02:21:09'),
+(7, 3, 'Còn 1 tiếng nữa là đến hạn task: Học Spring Boot Cloud Api GateWay', 0, '2025-03-12 02:21:09'),
+(8, 3, 'Còn 1 tiếng nữa là đến hạn task: Học Spring Boot Cloud Api GateWay', 0, '2025-03-12 02:21:09'),
+(9, 3, 'Còn 1 tiếng nữa là đến hạn task: a', 0, '2025-03-12 02:21:09');
 
 -- --------------------------------------------------------
 
@@ -232,7 +240,30 @@ INSERT INTO `tasks` (`id`, `user_id`, `title`, `description`, `due_date`, `statu
 (2, 3, 'Đồ Án Chuyên Ngành', 'Thực hiện dự án website cá nhân sử dụng React Typescript + Spring Boot trong 10 tuần', '2025-04-25 20:52:48', 'Đang hoàn thành', 'Cao', '2025-03-04 13:54:16', '2025-03-04 16:19:53', 0),
 (3, 3, 'Làm Báo Cáo Chuyên Đề Seminar', 'Thực hiện nghiên cứu báo cáo về Neuron và network và nộp tiểu luận ở tuần 10', '2025-04-27 20:54:27', 'Chưa làm', 'Cao', '2025-03-04 13:55:49', '2025-03-04 16:19:55', 0),
 (4, 3, 'Thiết Kế Giao Diện', 'Xây dựng  Cho Website Bán Đồ Ăn Nhanh bằng Figma với các chức năng cần thiết cho người dùng và tối ưu UI/UX', '2025-05-09 20:56:01', 'Đang hoàn thành', 'Thấp', '2025-03-04 13:57:37', '2025-03-04 16:19:57', 0),
-(5, 3, 'test ', 'abcd', '2025-03-08 16:40:24', 'update', 'cao', '2025-03-04 16:32:24', '2025-03-08 08:51:21', 1);
+(5, 3, 'test ', 'abcd', '2025-03-08 16:40:24', 'update', 'cao', '2025-03-04 16:32:24', '2025-03-08 08:51:21', 1),
+(6, 3, 'test ', 'description 1', '2025-03-09 13:30:40', 'Đang hoàn thành', 'Thấp', '2025-03-09 05:41:25', '2025-03-09 05:41:44', 1),
+(7, 3, 'Thông báo 6', 'Mô tả 6', '2025-03-09 14:45:55', 'Đang hoàn thành', 'Cao', '2025-03-09 05:46:30', '2025-03-11 08:47:28', 0),
+(8, 3, 'Học Laravel trong 30 ngày', 'Laravel được phát triển mạnh mẽ từ năm 2011, hiện nay có trên 1.300.000 website .', NULL, 'Đang Hoàn Thành', 'Trung Bình', '2025-03-12 00:19:36', '2025-03-12 00:19:36', 0),
+(9, 3, 'Học Spring Boot Kafla', 'Học lý thuyết + thực hành và áp dụng vào dự án thực tế để chat trực với người khác và thông báo cho người dùng', '2025-03-12 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 00:44:56', '2025-03-12 00:44:56', 1),
+(10, 3, 'Học Spring Boot Cloud Api GateWay', 'Học lý thuyết + thực hành và áp dụng vào dự án thực tế để chat trực với người khác và thông báo cho người dùng', '2025-03-12 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 00:45:40', '2025-03-12 00:45:40', 1),
+(11, 3, 'Học Laravel trong 30 ngày', 'Laravel được phát triển mạnh mẽ từ năm 2011, hiện nay có trên 1.300.000 website .', NULL, 'Đang Hoàn Thành', 'Trung Bình', '2025-03-12 00:46:46', '2025-03-12 00:46:46', 0),
+(12, 3, 'Học Spring Boot Cloud Api GateWay', 'Học lý thuyết + thực hành và áp dụng vào dự án thực tế để chat trực với người khác và thông báo cho người dùng', '2025-03-12 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 00:46:52', '2025-03-12 00:46:52', 1),
+(13, 3, 'Học Spring Boot Cloud Api GateWay', 'Học lý thuyết + thực hành và áp dụng vào dự án thực tế để chat trực với người khác và thông báo cho người dùng', '2025-03-12 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 00:47:30', '2025-03-12 00:47:30', 1),
+(14, 3, 'a', 'a', '2025-03-13 17:00:00', 'Đang hoàn thành', 'Cao', '2025-03-12 00:51:51', '2025-03-12 00:51:51', 0),
+(15, 3, 'a', 'a', '2025-03-12 17:00:00', 'Đã hoàn thành', 'Trung bình', '2025-03-12 00:53:07', '2025-03-12 00:53:07', 1),
+(16, 3, 'a', 'a', '2025-03-19 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 00:56:40', '2025-03-12 00:56:40', 0),
+(17, 3, 'a', 'a', '2025-03-22 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 00:58:09', '2025-03-12 00:58:09', 0),
+(18, 3, 'a', 'a', '2025-03-22 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 01:00:51', '2025-03-12 01:00:51', 0),
+(19, 3, 'b', 'b', '2025-03-17 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 01:03:45', '2025-03-12 01:03:45', 0),
+(20, 3, 'b', 'b', '2025-03-21 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 01:04:23', '2025-03-12 01:04:23', 0),
+(21, 3, 'b', 'b', '2025-03-21 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 01:04:24', '2025-03-12 01:04:24', 0),
+(22, 3, 'a', 'aa', '2025-03-17 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 01:08:20', '2025-03-12 01:08:20', 0),
+(23, 3, 'a', 'a', '2025-03-17 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 01:08:28', '2025-03-12 01:08:28', 0),
+(24, 3, 'Tập thể dục mỗi ngày 30p trong vòng 6 tháng', 'Hít đất 100 cái + hít xà đơn 30 cái + chạy bộ 1km', '2025-06-26 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 01:15:41', '2025-03-12 01:15:41', 0),
+(25, 3, 'a', 'aa', '2025-06-26 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 01:16:57', '2025-03-12 01:16:57', 0),
+(26, 3, 'a', 'aa', '2025-03-26 17:00:00', 'Đang hoàn thành', 'Trung bình', '2025-03-12 01:17:36', '2025-03-12 01:17:36', 0),
+(27, 3, 'a', 'a', '2025-03-17 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 01:19:02', '2025-03-12 01:19:02', 0),
+(28, 3, 'a', 'a', '2025-03-25 17:00:00', 'Đang hoàn thành', 'Thấp', '2025-03-12 01:20:15', '2025-03-12 01:20:15', 0);
 
 -- --------------------------------------------------------
 
@@ -432,7 +463,7 @@ ALTER TABLE `labels`
 -- AUTO_INCREMENT cho bảng `notes`
 --
 ALTER TABLE `notes`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT cho bảng `note_features`
@@ -450,7 +481,7 @@ ALTER TABLE `note_labels`
 -- AUTO_INCREMENT cho bảng `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT cho bảng `recent_notes`
@@ -474,7 +505,7 @@ ALTER TABLE `shared_notes`
 -- AUTO_INCREMENT cho bảng `tasks`
 --
 ALTER TABLE `tasks`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT cho bảng `task_assignees`
