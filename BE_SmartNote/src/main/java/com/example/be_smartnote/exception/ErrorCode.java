@@ -21,7 +21,11 @@ public enum ErrorCode {
     USER_IS_BLOCKED(1010, "User blocked", HttpStatus.BAD_REQUEST),
     EMAIL_IS_EXISTED(1011, "Email already existed", HttpStatus.BAD_REQUEST),
     USER_NOT_EXISTED(1012, "User not existed", HttpStatus.BAD_REQUEST),
+    NOTE_EXITS(1013,"Note exited", HttpStatus.BAD_REQUEST),
 
+    NOTE_NOT_EXITS(1014,"Note not exited", HttpStatus.BAD_REQUEST),
+    TASK_NOT_EXITS(1015,"Task not exited", HttpStatus.BAD_REQUEST),
+    COMMENT_NOT_EXITS(1015,"Task not exited", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

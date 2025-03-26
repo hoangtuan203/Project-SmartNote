@@ -28,4 +28,13 @@ public class RecentNoteController {
                 .build();
     }
 
+    @PostMapping("/save")
+    public ApiResponse<List<RecentNoteResponse>> saveRecentNote(@RequestParam Long userId, @RequestParam Long noteId){
+        List<RecentNoteResponse> result = recentNoteService.saveOrUpdateRecentNote(userId,noteId);
+        return ApiResponse.<List<RecentNoteResponse>>builder()
+                .code(1000)
+                .message("save recent note success")
+                .result(result)
+                .build();
+    }
 }

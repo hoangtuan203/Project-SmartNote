@@ -6,6 +6,23 @@ interface NotificationProps {
   notifications: NotificationType[]; // Sử dụng kiểu dữ liệu đã định nghĩa trong service
 }
 
+// Hàm tính toán thời gian đã trôi qua
+const timeAgo = (time: string | number) => {
+  const timestamp = typeof time === "string" ? Date.parse(time) : time;
+  const now = new Date();
+  const diff = now.getTime() - timestamp;
+
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days} ngày trước`;
+  if (hours > 0) return `${hours} giờ trước`;
+  if (minutes > 0) return `${minutes} phút trước`;
+  return "Vừa xong";
+};
+
 const Notification = ({ notifications }: NotificationProps) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -52,7 +69,9 @@ const Notification = ({ notifications }: NotificationProps) => {
                   className="px-4 py-3 border-b dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                 >
                   <p className="text-sm">{noti.message}</p>
-                  <span className="text-xs text-gray-500">{noti.time}</span>
+                  <span className="text-xs text-gray-500">
+                    {timeAgo(noti.time)}
+                  </span>
                 </li>
               ))
             ) : (

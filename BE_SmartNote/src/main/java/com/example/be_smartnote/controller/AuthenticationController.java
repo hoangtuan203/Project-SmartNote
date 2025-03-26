@@ -129,7 +129,7 @@ public class AuthenticationController {
         RestTemplate restTemplate = new RestTemplate();
         String tokenUrl = "https://oauth2.googleapis.com/token";
 
-        Map<String, String> params = new HashMap<>();
+        Map<String, String> params =    new HashMap<>();
         params.put("code", code);
         params.put("client_id", GOOGLE_CLIENT_ID);
         params.put("client_secret", GOOGLE_CLIENT_SECRET);

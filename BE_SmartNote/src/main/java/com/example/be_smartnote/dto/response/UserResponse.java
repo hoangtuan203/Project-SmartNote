@@ -2,6 +2,8 @@ package com.example.be_smartnote.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.Instant;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,5 +16,5 @@ public class UserResponse {
     String password;
     String avatarUrl;
     String provider;
-    
+    Instant createdAt;
 }

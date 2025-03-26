@@ -16,8 +16,9 @@ import { GoTasklist } from "react-icons/go";
 import { FaRegNoteSticky } from "react-icons/fa6";
 import { GrHomeRounded } from "react-icons/gr";
 import Logo from "../../assets/logo.png";
-import { fetchRecentNotes } from "@/service/RecentNote";
-import { RecentNote } from "@/service/RecentNote";
+import { fetchRecentNotes } from "@/service/RecentNoteService";
+import { RecentNote } from "@/service/RecentNoteService";
+import { IoMailUnreadOutline } from "react-icons/io5";
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isPrivateOpen, setIsPrivateOpen] = useState(false);
@@ -25,10 +26,16 @@ const Sidebar = () => {
   const { darkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
 
+  // Hàm rút gọn tiêu đề
+  const truncateTitle = (title: string, maxLength: number = 20) => {
+    if (title.length <= maxLength) return title;
+    return `${title.slice(0, maxLength)}...`;
+  };
+
   useEffect(() => {
     const loadRecentNotes = async () => {
       try {
-        const notes = await fetchRecentNotes(5); // Lấy 5 ghi chú gần nhất
+        const notes = await fetchRecentNotes(4); // Lấy 4 ghi chú gần nhất
         console.log("Recent notes fetched:", notes);
         setRecentNotes(notes);
       } catch (error) {
@@ -47,6 +54,7 @@ const Sidebar = () => {
     localStorage.removeItem("avatar");
     localStorage.removeItem("token");
     localStorage.removeItem("accessToken");
+    localStorage.removeItem("userId");
     navigate("/login");
   };
 
@@ -81,6 +89,13 @@ const Sidebar = () => {
               label: "Home",
               icon: <GrHomeRounded className="text-xl" />,
             },
+
+            {
+              path: "/inbox",
+              label: "Inbox",
+              icon: <IoMailUnreadOutline className="text-xl" />,
+            },
+
             {
               path: "/note",
               label: "Notes",
@@ -101,11 +116,7 @@ const Sidebar = () => {
               label: "Trash",
               icon: <BsTrash2 className="text-xl" />,
             },
-            {
-              path: "/template",
-              label: "Template",
-              icon: <CgTemplate className="text-xl" />,
-            },
+         
           ].map(({ path, label, icon }) => (
             <li key={path}>
               <NavLink
@@ -151,15 +162,18 @@ const Sidebar = () => {
                 recentNotes.map((note) => (
                   <li key={note.noteId}>
                     <button
-                      onClick={() => navigate(`/note/${note.noteId}`)} // Điều hướng khi bấm vào note
-                      className="flex items-center gap-3 p-2 rounded-md transition-all hover:bg-gray-300 dark:hover:bg-gray-700 w-full text-left"
+                      onClick={() => navigate(`/note/${note.noteId}`)}
+                      className="flex items-center gap-3 p-2 rounded-md transition-all hover:bg-gray-400 dark:hover:bg-gray-600 w-full text-left text-sm"
+                      title={note.note_title} // Hiển thị đầy đủ tiêu đề khi hover
                     >
-                      {!isCollapsed && <span>{note.note_title}</span>}
+                      {!isCollapsed && (
+                        <span>{truncateTitle(note.note_title)}</span>
+                      )}
                     </button>
                   </li>
                 ))
               ) : (
-                <li className="text-sm text-gray-500 dark:text-gray-400">
+                <li className="text-xs text-gray-500 dark:text-gray-400">
                   {!isCollapsed && "No recent notes"}
                 </li>
               )}
@@ -170,7 +184,7 @@ const Sidebar = () => {
 
       {/* Footer - Theme Toggle & Logout */}
       <div className="border-t mt-4 pt-4">
-        <button
+        {/* <button
           onClick={toggleDarkMode}
           className="flex items-center gap-3 p-2 w-full rounded-md hover:bg-gray-300 dark:hover:bg-gray-700"
         >
@@ -180,7 +194,7 @@ const Sidebar = () => {
             <FaMoon className="text-xl" />
           )}
           {!isCollapsed && <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>}
-        </button>
+        </button> */}
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 p-2 w-full rounded-md text-red-500 hover:bg-gray-300 dark:hover:bg-gray-700"

@@ -1,6 +1,7 @@
 package com.example.be_smartnote.service;
 
 import com.example.be_smartnote.dto.request.TaskRequest;
+import com.example.be_smartnote.dto.response.NoteResponse;
 import com.example.be_smartnote.dto.response.TaskResponse;
 import com.example.be_smartnote.dto.response.TaskResponseWrapper;
 import com.example.be_smartnote.entities.Task;
@@ -111,4 +112,28 @@ public class TaskService {
 
         return taskMapper.toTaskResponse(newTask);
     }
+
+
+    //update task
+
+    public TaskResponse updateTask(Long taskId, TaskRequest taskRequest){
+        Task task = taskRepository.findById(taskId).orElseThrow(() -> new AppException(ErrorCode.TASK_NOT_EXITS));
+
+        User user = userRepository.findById(taskRequest.getUserId()).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        Instant instant = Instant.now();
+
+        task.setUser(user);
+        task.setTitle(taskRequest.getTitle());
+        task.setDescription(taskRequest.getDescription());
+        task.setDueDate(task.getDueDate());
+        task.setPriority(task.getPriority());
+        task.setStatus(task.getStatus());
+        task.setCreatedAt(instant);
+        task.setUpdatedAt(instant);
+
+        taskRepository.save(task);
+
+        return taskMapper.toTaskResponse(task);
+    }
+
 }

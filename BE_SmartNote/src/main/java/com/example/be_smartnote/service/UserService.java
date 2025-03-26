@@ -1,12 +1,18 @@
 package com.example.be_smartnote.service;
 
 import com.example.be_smartnote.dto.request.UserRequest;
+import com.example.be_smartnote.dto.response.TaskResponse;
+import com.example.be_smartnote.dto.response.TaskResponseWrapper;
 import com.example.be_smartnote.dto.response.UserResponse;
+import com.example.be_smartnote.dto.response.UserResponseWrapper;
+import com.example.be_smartnote.entities.Task;
 import com.example.be_smartnote.entities.User;
 import com.example.be_smartnote.exception.AppException;
 import com.example.be_smartnote.exception.ErrorCode;
 import com.example.be_smartnote.mapper.UserMapper;
 import com.example.be_smartnote.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +26,16 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+    }
+
+    public UserResponseWrapper getAllUser(Pageable pageable) {
+        Page<User> users = userRepository.findAllByPageable(pageable);
+        Page<UserResponse> userResponse = users.map(userMapper::toUserResponse);
+        return new UserResponseWrapper(
+                userResponse.getTotalPages(),
+                userResponse.getTotalElements(),
+                userResponse.getContent()
+        );
     }
 
     public UserResponse createUser(UserRequest request) {

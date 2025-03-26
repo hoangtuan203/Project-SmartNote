@@ -14,6 +14,7 @@ import java.time.Instant;
 @Table(name = "recent_notes")
 public class RecentNote {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 

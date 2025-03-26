@@ -8,7 +8,6 @@ import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import * as React from "react";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { toast } from "react-toastify";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { createTask } from "@/service/TaskService";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; 
 import { ToastContainer } from "react-toastify";
 const priorityLevels = ["Cao", "Trung bình", "Thấp"];
@@ -71,7 +71,7 @@ export default function CreateTask() {
         userId: userId,
         title: newTask.title,
         description: newTask.description,
-        dueDate: formattedDueDate,
+        dueDate: formattedDueDate,  
         priority: newTask.priority,
         status: newTask.status,
       });

@@ -11,6 +11,7 @@ import { Trash } from "lucide-react";
 import CreateNote from "@/components/note/CreateNote";
 import GoogleCallback from "@/pages/Login/GoogleCallback";
 import FacebookCallback from "@/pages/Login/FacebookCallback";
+import ChatHome from "@/components/chat";
 
 const publicRoutes = [
   { path: "/", component: Home, layout: DefaultLayout },
@@ -26,7 +27,7 @@ const publicRoutes = [
   { path: "/oauth2/callback/facebook", component: FacebookCallback, layout: null },
   { path: "/note/:id", component: CreateNote, layout: DefaultLayout },
   { path: "/task/:id", component: CreateTask, layout: DefaultLayout },
-
+  { path : "/inbox", component : ChatHome, layout : DefaultLayout}
 ];
 
 export default publicRoutes;

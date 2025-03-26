@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FaTimes } from "react-icons/fa";
-import { FiShare2 } from "react-icons/fi";
 import AvatarDefault from "../../assets/avatar_default.png";
 import Notification from "../notification/Notification";
 import { IoAddSharp } from "react-icons/io5";
 import { IoArrowBack, IoArrowForward } from "react-icons/io5";
 import { Notification as NotificationType, ListNotification } from "@/service/NotificationService";
+import ShareHome from "@/components/share/index";
 
 const Header = () => {
   const [notification, setNotification] = useState<NotificationType[]>([]);
@@ -137,9 +137,9 @@ const Header = () => {
 
         {/* Các icon chức năng */}
         <div className="flex items-center gap-4">
-          <button className="text-black px-4 py-2 rounded-md hover:bg-gray-200 transition-colors">
-            <FiShare2 className="text-xl" />
-          </button>
+
+
+          <ShareHome></ShareHome>
 
           {/* Thông báo */}
           <Notification notifications={notification} />

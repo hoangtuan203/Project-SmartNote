@@ -12,7 +12,7 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "files")
-public class File {
+public class NoteFile {
     @Id
     @Column(name = "id", nullable = false)
     private Long id;
@@ -36,5 +36,6 @@ public class File {
 
     @Column(name = "uploaded_at", nullable = false)
     private Instant uploadedAt;
+
 
 }

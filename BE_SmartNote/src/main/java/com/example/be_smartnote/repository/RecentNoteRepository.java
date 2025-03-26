@@ -16,4 +16,7 @@ public interface RecentNoteRepository extends JpaRepository<RecentNote, Long> {
     @EntityGraph(attributePaths = {"note", "user"})
     @Query("SELECT r FROM RecentNote r ORDER BY r.lastOpened DESC")
     List<RecentNote> findRecentNotesWithUsersAndNotes(Pageable pageable);
+
+    @Query("SELECT r FROM RecentNote r WHERE r.user.id = :userId AND r.note.id = :noteId")
+    Optional<RecentNote> findByUserAndNote(Long userId, Long noteId);
 }

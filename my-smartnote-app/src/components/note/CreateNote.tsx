@@ -1,23 +1,31 @@
 import { useState, useRef, useEffect } from "react";
 import EmojiPicker from "emoji-picker-react";
-// import {
-//   DropdownMenu,
-//   DropdownMenuTrigger,
-//   DropdownMenuContent,
-//   DropdownMenuItem,
-// } from "@radix-ui/react-dropdown-menu";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, Image, MessageCircle, X, Paperclip, Send } from "lucide-react";
-import SlashCommand from "@/components/note/Slash_Command";
-import TiptapEditor from "@/components/note/TiptapEditor";
-interface Comment {
-  id: number;
-  user: string;
-  content: string;
-  time: string;
-}
-
+import {
+  Plus,
+  Image,
+  MessageCircle,
+  X,
+  Paperclip,
+  Send,
+  AtSign,
+} from "lucide-react";
+import { Note, NoteRequest, saveNote, updateNote } from "@/service/NoteService";
+import { debounce } from "lodash";
+import {
+  fetchComments,
+  Comment,
+  saveComment,
+  deleteComment,
+} from "@/service/CommentService";
+import { formatDistanceToNow } from "date-fns";
+import { getAllNotes } from "@/service/NoteService";
+import { getAllUser } from "@/service/UserService";
+import NoteContent from "@/components/note/NoteContent";
+import { getNoteImages, NoteImage } from "@/service/NoteImageService";
 export default function CreateNote() {
+  const [noteContent, setNoteContent] = useState("");
   const [title, setTitle] = useState("Untitled Note");
   const [icon, setIcon] = useState("📝");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -34,61 +42,138 @@ export default function CreateNote() {
   const [isCommentBoxVisible, setIsCommentBoxVisible] = useState(false);
   const commentBoxRef = useRef<HTMLDivElement>(null);
 
-  const [content, setContent] = useState("");
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
-  const [isSlashCommandVisible, setIsSlashCommandVisible] = useState(false);
-  const [slashCommandPosition, setSlashCommandPosition] = useState({
-    top: 0,
-    left: 0,
-  });
-  const editorRef = useRef<HTMLDivElement>(null);
-  const [isEditorVisible, setIsEditorVisible] = useState(false);
-  const [editorPosition, setEditorPosition] = useState({ top: 0, left: 0 });
+  const location = useLocation();
+  const note: Note | null = location.state || null;
 
-  //event mouse up
-  const handleMouseUp = () => {
-    const selection = window.getSelection();
-    if (selection && selection.toString().trim() !== "") {
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
+  const noteId = note?.noteId ?? -1;
+  const userId = localStorage.getItem("userId") || "unknown";
+  const [showMentionList, setShowMentionList] = useState(false);
+  const [mentionPeopleList, setMentionPeopleList] = useState<string[]>([]);
+  const [mentionNoteList, setMentionNoteList] = useState<
+    { id: number; title: string }[]
+  >([]);
 
-      setEditorPosition({
-        top: rect.top + window.scrollY + 30, // Hiển thị ngay dưới chữ bôi đen
-        left: rect.left + window.scrollX,
-      });
-
-      setIsEditorVisible(true);
-    } else {
-      setIsEditorVisible(false);
+  // Hàm chèn placeholder vào dòng hiện tại
+  const loadUserNote = async () => {
+    try {
+      const data = await getAllUser(1, 5); // Lấy 5 user đầu tiên
+      if (data) {
+        const userList = data.users.map((user) => `${user.fullName}`);
+        setMentionPeopleList(userList); // Cập nhật danh sách People
+      }
+    } catch (error) {
+      console.error("Error loading user note:", error);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "/") {
-      e.preventDefault(); // Ngăn nhập ký tự "/"
-      updateSlashCommandPosition();
-      setIsSlashCommandVisible(true);
-    } else if (e.key === "Escape") {
-      setIsSlashCommandVisible(false);
+  const loadNotes = async () => {
+    try {
+      const data = await getAllNotes(); // Lấy tất cả các ghi chú
+      if (data) {
+        const noteList = data.map((note) => ({
+          id: note.noteId, // Lấy ra noteId
+          title: note.title, // Lấy ra title
+        }));
+        setMentionNoteList(noteList); // Cập nhật danh sách Notes với cả id và title
+      }
+    } catch (error) {
+      console.error("Error loading notes:", error);
     }
   };
 
-  // Xác định vị trí SlashCommand dựa trên vị trí con trỏ
-  const updateSlashCommandPosition = () => {
-    if (editorRef.current) {
-      const selection = window.getSelection();
-      if (!selection || selection.rangeCount === 0) return;
 
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
+  const samplePeopleList =
+    mentionPeopleList.length > 0
+      ? mentionPeopleList
+      : [
+          "Nguyễn Hoàng Tuấn (You)",
+          "0552_Vũ Ngọc Tú",
+          "0545_Trịnh Quang Trường",
+          "Invite...",
+        ];
 
-      setSlashCommandPosition({
-        top: rect.bottom + window.scrollY + 20, // Dưới dấu "/"
-        left: rect.left + window.scrollX - 5, // Căn chỉnh vị trí
-      });
+  const sampleNoteList =
+    mentionNoteList.length > 0
+      ? mentionNoteList
+      : [
+          "Used To",
+          "Chức năng Smart Note",
+          "Chia công việc TKGD",
+          "Teamspace Home",
+          "Learn English",
+        ];
+
+  const username = localStorage.getItem("username");
+  useEffect(() => {
+    if (note) {
+      setTitle(note.title);
+      setNoteContent(note.content);
+    }
+  }, [note]);
+
+  // Load comments
+  const loadComment = async () => {
+    try {
+      const data = await fetchComments(5); // Số lượng comment muốn lấy
+      if (data) {
+        setComments(data);
+      }
+    } catch (error) {
+      console.error("Error loading comments:", error);
     }
   };
 
+  useEffect(() => {
+    loadComment();
+    loadUserNote();
+    loadNotes();
+  }, []);
+
+  // useEffect(() => {
+  //   const autoSave = debounce(async () => {
+  //     try {
+  //       // Load ảnh mới nhất trước khi lưu
+  //       // const imagesData = await getNoteImages(noteId);
+  //       // setNoteImages(imagesData);
+
+  //       // Kiểm tra nếu userId hợp lệ
+  //       const userIdNumber = userId ? Number(userId) : null;
+  //       if (!userIdNumber) {
+  //         console.error("Invalid userId");
+  //         return;
+  //       }
+
+  //       const noteData: Omit<Note, "noteId"> = {
+  //         title,
+  //         content: noteContent,
+  //         userId: userIdNumber,
+  //         createdAt: new Date().toISOString(), // Đảm bảo kiểu string
+  //         is_pinned: false,
+  //         color: "#ffffff",
+  //       };
+
+  //       const imagesArray = imagesData?.length ? imagesData : undefined;
+
+  //       if (!noteId || noteId === -1) {
+  //         const newNote = await saveNote(noteData as NoteRequest);
+  //         console.log("newNote", newNote);
+  //         noteId = newNote.noteId;
+  //         localStorage.setItem("noteId", noteId.toString());
+  //       } else {
+  //         await updateNote(noteId, noteData as NoteRequest, imagesArray);
+  //       }
+  //     } catch (error) {
+  //       console.error("Auto-save failed:", error);
+  //     }
+  //   }, 6000);
+
+  //   autoSave();
+  //   return () => {
+  //     autoSave.cancel();
+  //   };
+  // }, [title, noteContent, noteId]); // Đưa `noteId` vào dependencies để đảm bảo ảnh được cập nhật
   // Ẩn comment box khi bấm ra ngoài
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -134,10 +219,59 @@ export default function CreateNote() {
     }
   };
 
-  const handleDeleteComment = (id: number) => {
-    setComments((prevComments) =>
-      prevComments.filter((comment) => comment.id !== id)
-    );
+  //delete comment
+  const handleDeleteComment = async (id: number) => {
+    try {
+      const result = await deleteComment(id);
+      if (result) {
+        // Nếu xóa thành công, cập nhật lại danh sách comment
+        setComments((prevComments) =>
+          prevComments.filter((comment) => comment.commentId !== id)
+        );
+        console.log("Comment deleted successfully!");
+      } else {
+        console.error("Failed to delete comment from server.");
+      }
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+    }
+  };
+
+  const toggleMentionList = () => {
+    setShowMentionList(!showMentionList);
+
+    // Nếu đang mở danh sách, thì tải lại cả People và Notes
+    if (!showMentionList) {
+      loadUserNote();
+      loadNotes();
+    }
+  };
+
+  //paste images
+
+  const handleMentionSelect = (
+    mention: string,
+    type: "people" | "note",
+    noteId?: number
+  ) => {
+    let mentionText;
+
+    if (type === "note" && noteId) {
+      mentionText = `<span 
+      class="bd inline-flex items-center gap-1 px-1.5 py-0.5 bg-muted/20 border border-gray-400 rounded-md cursor-pointer transition-all duration-300 hover:bg-accent/30 hover:border-gray-600"
+      onclick="window.open('/note/${noteId}', '_blank')">
+        📄 ${mention}
+      </span>`;
+    } else {
+      mentionText = `<span 
+      class="inline-flex items-center gap-1 px-1.5 py-0.5 text-black- rounded-md">
+        @${mention}
+      </span>`;
+    }
+
+    // Cập nhật nội dung comment bằng HTML
+    setCommentText((prev) => `${prev} ${mentionText} `);
+    setShowMentionList(false);
   };
 
   // Ẩn Emoji Picker khi bấm ra ngoài
@@ -160,24 +294,38 @@ export default function CreateNote() {
     };
   }, [showEmojiPicker]);
 
-  // Xử lý thêm comment
-  const handleAddComment = () => {
+  //save comment data
+  const handleAddComment = async () => {
+    console.log("handleAddComment");
+
     if (!commentText.trim() && !attachedFile) return;
 
-    const newComment: Comment = {
-      id: comments.length + 1,
-      user: "Nguyễn Hoàng Tuấn",
+    const newComment: Omit<Comment, "commentId" | "createdAt"> = {
       content: commentText,
-      time: "Just now",
+      userId: Number(userId),
+      noteId: noteId,
     };
 
-    setComments([newComment, ...comments]);
-    setCommentText("");
-    setAttachedFile(null);
+    try {
+      const savedComment = await saveComment(newComment);
+
+      if (savedComment) {
+        console.log("Comment saved successfully:", savedComment);
+        // Sau khi lưu thành công, gọi hàm load lại danh sách comment
+        setComments((prevComments) => [savedComment, ...prevComments]);
+        setCommentText("");
+        setAttachedFile(null);
+      } else {
+        console.error("Comment saving failed: No result returned");
+      }
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
   };
 
   return (
-    <div className="w-full min-h-screen px-10 py-6 bg-white text-black shadow-lg">
+    <div className="w-full min-h-screen px-10 py-6 bg-white text-black">
+      {/* <ToastContainer position="top-right" autoClose={3000} /> */}
       {/* Ảnh bìa nếu có */}
       {coverImage && (
         <div className="relative mb-4">
@@ -195,7 +343,6 @@ export default function CreateNote() {
           </Button>
         </div>
       )}
-
       {/* Tiêu đề có thể chỉnh sửa */}
       <div className="flex items-center gap-2">
         <span
@@ -210,7 +357,6 @@ export default function CreateNote() {
           onChange={(e) => setTitle(e.target.value)}
         />
       </div>
-
       {/* Emoji Picker */}
       {showEmojiPicker && (
         <div
@@ -225,7 +371,6 @@ export default function CreateNote() {
           />
         </div>
       )}
-
       {/* Các nút tùy chọn */}
       <div className="flex gap-3 mt-3 text-gray-500">
         <Button
@@ -258,25 +403,35 @@ export default function CreateNote() {
           <MessageCircle size={16} /> Comment
         </Button>
       </div>
-
       {/* Danh sách comment */}
       {isCommentBoxVisible && (
         <div className="mt-8">
-          {comments.map((comment) => (
+          {comments.map((comment, index) => (
             <div
-              key={comment.id}
+              key={`${comment.commentId}-${index}`} // Đảm bảo key duy nhất
               className="flex items-start gap-3 mb-3 relative group"
             >
               {/* Avatar */}
-              <div className="w-8 h-8 flex items-center justify-center bg-gray-700 rounded-full text-white">
-                <span className="text-sm font-bold">N</span>
+              <div className="w-8 h-8 flex items-center justify-center bg-gray-700 rounded-full text-white overflow-hidden">
+                {localStorage.getItem("avatar") ? (
+                  <img
+                    src={localStorage.getItem("avatar") || ""}
+                    alt="Avatar"
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                ) : (
+                  <span className="text-sm font-bold">N</span>
+                )}
               </div>
 
-              {/* Nội dung comment */}
               <div className="flex-1">
-                <p className="text-sm font-semibold">
-                  {comment.user}{" "}
-                  <span className="text-gray-400">{comment.time}</span>
+                <p className="text-sm font-semibold flex items-center gap-2">
+                  <span className="text-black">{username}</span>
+                  <span className="text-gray-400 text-xs">
+                    {formatDistanceToNow(new Date(comment.createdAt), {
+                      addSuffix: true,
+                    })}
+                  </span>
                 </p>
                 <p className="text-base">{comment.content}</p>
               </div>
@@ -285,26 +440,42 @@ export default function CreateNote() {
               <X
                 size={16}
                 className="text-red-500 cursor-pointer hidden group-hover:block absolute right-0 top-1"
-                onClick={() => handleDeleteComment(comment.id)}
+                onClick={() => handleDeleteComment(comment.commentId)}
               />
             </div>
           ))}
 
           {/* Ô nhập comment */}
-          {/* Ô nhập comment */}
           <div className="flex flex-col gap-2 bg-gray-100 p-2 rounded-lg relative">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 flex items-center justify-center bg-gray-700 rounded-full text-white">
-                <span className="text-sm font-bold">N</span>
+              <div className="w-8 h-8 flex items-center justify-center bg-gray-700 rounded-full text-white overflow-hidden">
+                {localStorage.getItem("avatar") ? (
+                  <img
+                    src={localStorage.getItem("avatar") || ""}
+                    alt="Avatar"
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                ) : (
+                  <span className="text-sm font-bold">N</span>
+                )}
               </div>
-              <input
-                type="text"
-                className="flex-1 p-2 bg-gray-100 text-black border-none outline-none placeholder-gray-400"
-                placeholder="Add a comment..."
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
+
+              <div
+                className={`flex-1 p-2 bg-gray-100 text-black border-none outline-none placeholder-gray-400 ${
+                  !commentText ? "placeholder" : ""
+                }`}
+                contentEditable
+                dangerouslySetInnerHTML={{ __html: commentText }}
+                onInput={(e) => setCommentText(e.currentTarget.innerHTML)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
+              ></div>
+
+              <AtSign
+                size={16}
+                className="text-gray-400 cursor-pointer"
+                onClick={toggleMentionList}
               />
+
               <input
                 type="file"
                 multiple
@@ -312,7 +483,6 @@ export default function CreateNote() {
                 ref={fileInputRef}
                 onChange={handleFileUpload}
               />
-
               <Paperclip
                 size={16}
                 className="text-gray-400 cursor-pointer"
@@ -323,6 +493,63 @@ export default function CreateNote() {
                 className="text-gray-400 cursor-pointer"
                 onClick={handleAddComment}
               />
+
+              {/* Mention List Popup */}
+              {showMentionList && (
+                <div className="absolute top-16 left-0 bg-white border rounded-lg shadow-md p-2 w-64 z-10">
+                  {/* Phần tiêu đề People */}
+                  <div className="text-gray-600 font-semibold mb-1">People</div>
+                  <div className="max-h-32 overflow-y-auto">
+                    {samplePeopleList.map((person, index) => (
+                      <div
+                        key={`people-${index}`}
+                        className="p-2 hover:bg-gray-100 cursor-pointer rounded flex items-center space-x-2"
+                        onClick={() => handleMentionSelect(person, "people")}
+                      >
+                        <span className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                          <span className="text-white">{person.charAt(0)}</span>
+                        </span>
+                        <span>{person}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Đường phân cách */}
+                  <hr className="my-2 border-gray-300" />
+
+                  {/* Phần tiêu đề Link to Page */}
+                  <div className="text-gray-600 font-semibold mb-1">
+                    Link to page
+                  </div>
+                  <div className="max-h-32 overflow-y-auto">
+                    {sampleNoteList.map((note, index) => {
+                      const noteTitle =
+                        typeof note === "string" ? note : note.title;
+                      const noteId =
+                        typeof note === "object" && note !== null
+                          ? note.id
+                          : undefined;
+
+                      return (
+                        <div
+                          key={`note-${index}`}
+                          className="p-2 hover:bg-gray-100 cursor-pointer rounded flex items-center space-x-2"
+                          onClick={() =>
+                            handleMentionSelect(noteTitle, "note", noteId)
+                          }
+                        >
+                          <span className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                            📄
+                          </span>
+                          <span className="underline text-blue-600 hover:text-blue-800">
+                            {noteTitle}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Hiển thị file đính kèm bên trong input comment */}
@@ -365,38 +592,9 @@ export default function CreateNote() {
         </div>
       )}
 
-      <div
-        ref={editorRef}
-        contentEditable={true}
-        className="w-full min-h-80 mt-5 p-4 text-lg outline-none rounded-md "
-        onMouseUp={handleMouseUp} // Bắt sự kiện bôi đen
-      />
-
-      {/* Hiển thị TiptapEditor khi bôi đen chữ */}
-      {isEditorVisible && (
-        <div
-          className="absolute bg-white shadow-md rounded-md p-2 border "
-          style={{
-            top: editorPosition.top,
-            left: editorPosition.left,
-          }}
-        >
-          <TiptapEditor />
-        </div>
-      )}
-
-      {/* Hiển thị SlashCommand tại vị trí con trỏ */}
-      {isSlashCommandVisible && (
-        <div
-          style={{
-            position: "absolute",
-            top: slashCommandPosition.top,
-            left: slashCommandPosition.left,
-          }}
-        >
-          <SlashCommand content={content} setContent={setContent} />
-        </div>
-      )}
+      <div>
+        <NoteContent/>
+      </div>
     </div>
   );
 }
