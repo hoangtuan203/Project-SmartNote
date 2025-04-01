@@ -3,7 +3,7 @@ import httpRequest from "@/utils/httpRequest";
 export interface RecentNote {
   id: string;
   userId: string;
-  noteId: string;
+  noteId: number;
   note_title: string;
   last_opend: string;
 }

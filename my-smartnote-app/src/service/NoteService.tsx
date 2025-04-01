@@ -7,7 +7,9 @@ export interface Note {
   content: string;
   is_pinned: boolean | null;
   color: string;
+  imageUrls: string[]; // Thêm danh sách URL ảnh
 }
+
 
 export interface NoteRequest {
   userId: number;
@@ -24,9 +26,10 @@ export interface NoteResponse {
   result?: {
     totalPages: number;
     totalElements: number;
-    notes: Note[];
+    notes: Note[]; // Đã bao gồm `imageUrls`
   };
 }
+
 
 export interface ApiResponse<T> {
   code?: number;
@@ -155,5 +158,14 @@ export const getImageUrl = async (filename: string): Promise<string> => {
   } catch (error) {
     console.error("Error fetching image:", error);
     return ""; // Trả về chuỗi rỗng nếu lỗi để tránh crash UI
+  }
+};
+export const getNoteById = async (id: number): Promise<ApiResponse<Note>> => {
+  try {
+    const response = await httpRequest.get(`/note/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching note:", error);
+    throw error;
   }
 };

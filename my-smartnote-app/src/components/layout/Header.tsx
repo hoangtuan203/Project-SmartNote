@@ -5,13 +5,14 @@ import AvatarDefault from "../../assets/avatar_default.png";
 import Notification from "../notification/Notification";
 import { IoAddSharp } from "react-icons/io5";
 import { IoArrowBack, IoArrowForward } from "react-icons/io5";
-import { Notification as NotificationType, ListNotification } from "@/service/NotificationService";
+import {
+  Notification as NotificationType,
+  ListNotification,
+} from "@/service/NotificationService";
 import ShareHome from "@/components/share/index";
 
 const Header = () => {
   const [notification, setNotification] = useState<NotificationType[]>([]);
-
-
 
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
@@ -22,8 +23,14 @@ const Header = () => {
   const emailUser = localStorage.getItem("email") || "Guest";
   const avatarUser = localStorage.getItem("avatar") || "/default-avatar.png"; // Ảnh mặc định nếu không có
 
+  interface ShareId {
+    type: "note" | "task"; // Loại nội dung
+    id: number;           // ID của nội dung
+  }
+  
+  const [shareId, setShareId] = useState<ShareId | null>(null);
   // State lưu thông tin user
-  const [user,        ] = useState({
+  const [user] = useState({
     email: emailUser,
     avatar: avatarUser,
   });
@@ -38,11 +45,28 @@ const Header = () => {
 
     // Kiểm tra nếu đang xem chi tiết note/task
     if (location.pathname.startsWith("/note/")) {
-      setCurrentTitle(`Note: ${location.pathname.split("/")[2]}`);
+      const idFromPath = location.pathname.split("/")[2];
+      const numericId = parseInt(idFromPath, 10);
+      if (!isNaN(numericId)) {
+        setCurrentTitle(`Note : ${idFromPath}`);
+        setShareId({ type: "note", id: numericId }); // Lưu type là "note"
+      } else {
+        setCurrentTitle("ID ghi chú không hợp lệ");
+        setShareId(null);
+      }
     } else if (location.pathname.startsWith("/task/")) {
-      setCurrentTitle(`Task: ${location.pathname.split("/")[2]}`);
+      const idFromPath = location.pathname.split("/")[2];
+      const numericId = parseInt(idFromPath, 10);
+      if (!isNaN(numericId)) {
+        setCurrentTitle(`Task : ${idFromPath}`);
+        setShareId({ type: "task", id: numericId }); // Lưu type là "task"
+      } else {
+        setCurrentTitle("ID nhiệm vụ không hợp lệ");
+        setShareId(null);
+      }
     } else {
-      setCurrentTitle(pathToTitle[location.pathname] || "Home");
+      setCurrentTitle(pathToTitle[location.pathname] || "Trang chủ");
+      setShareId(null);
     }
   }, [location.pathname]);
 
@@ -92,12 +116,9 @@ const Header = () => {
         console.error("Failed to fetch notifications", error);
       }
     };
-  
+
     fetchNotifications();
   }, []);
-  
-
-
 
   return (
     <>
@@ -137,9 +158,7 @@ const Header = () => {
 
         {/* Các icon chức năng */}
         <div className="flex items-center gap-4">
-
-
-          <ShareHome></ShareHome>
+          <ShareHome shareId={shareId} />
 
           {/* Thông báo */}
           <Notification notifications={notification} />
@@ -170,66 +189,71 @@ const Header = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 animate-fadeIn">
           <div
             ref={modalRef}
-            className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-96 relative"
+            className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl w-96 relative animate-slideIn"
           >
             {/* Nút đóng modal */}
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-500"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-500 transition"
             >
-              <FaTimes className="text-xl" />
+              <FaTimes className="text-2xl" />
             </button>
 
-            {/* Tiêu đề */}
-            <h2 className="text-xl font-semibold mb-4 text-center">
+            {/* Tiêu đề modal */}
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-4">
               Tạo Trang Mới
             </h2>
 
-            {/* Danh sách tùy chọn */}
+            {/* Các nút chọn */}
             <div className="space-y-3">
               <button
                 onClick={() => {
                   navigate("/note/create");
-                  setShowModal(false); // Ẩn modal khi tạo note
+                  setShowModal(false);
                 }}
-                className="w-full bg-gray-200 text-black py-3 rounded-md hover:bg-gray-300 transition-colors"
+                className="w-full py-3 rounded-lg text-lg font-medium bg-gray-200 text-black hover:bg-gray-300 transition"
               >
                 📒 Tạo Note
               </button>
               <button
                 onClick={() => {
-                  navigate("/calendar/create");
-                  setShowModal(false); // Ẩn modal khi tạo calendar
+                  navigate("/note/create");
+                  setShowModal(false);
                 }}
-                className="w-full bg-gray-200 text-black py-3 rounded-md hover:bg-gray-300 transition-colors"
+                className="w-full py-3 rounded-lg text-lg font-medium bg-gray-200 text-black hover:bg-gray-300 transition"
               >
                 📅 Tạo Calendar
               </button>
               <button
                 onClick={() => {
                   navigate("/task/create");
-                  setShowModal(false); // Ẩn modal khi tạo task
+                  setShowModal(false);
                 }}
-                className="w-full bg-gray-200 text-black py-3 rounded-md hover:bg-gray-300 transition-colors"
+                className="w-full py-3 rounded-lg text-lg font-medium bg-gray-200 text-black hover:bg-gray-300 transition"
               >
                 ✅ Tạo Task
               </button>
             </div>
 
-            {/* Lịch sử - Yesterday */}
+            {/* Lịch sử gần đây */}
             <div className="mt-6">
-              <h3 className="text-lg font-medium mb-3">Yesterday</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                Yesterday
+              </h3>
               <ul className="space-y-2">
                 {history
                   .filter((item) => item.time === "Yesterday")
                   .map((item) => (
                     <li
                       key={item.id}
-                      className="p-3 bg-gray-100 dark:bg-gray-700 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-                      onClick={() => navigate(`/${item.type}/${item.id}`)}
+                      className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                      onClick={() => {
+                        navigate(`/${item.type}/${item.id}`);
+                        setShowModal(false);
+                      }}
                     >
                       <strong>{item.title}</strong>
                     </li>
@@ -237,16 +261,17 @@ const Header = () => {
               </ul>
             </div>
 
-            {/* Lịch sử - Past Week */}
             <div className="mt-6">
-              <h3 className="text-lg font-medium mb-3">Past Week</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                Past Week
+              </h3>
               <ul className="space-y-2">
                 {history
                   .filter((item) => item.time === "Past Week")
                   .map((item) => (
                     <li
                       key={item.id}
-                      className="p-3 bg-gray-100 dark:bg-gray-700 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                      className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition"
                       onClick={() => navigate(`/${item.type}/${item.id}`)}
                     >
                       <strong>{item.title}</strong>

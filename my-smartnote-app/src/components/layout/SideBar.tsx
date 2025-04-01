@@ -1,16 +1,9 @@
 import React, { useState, useEffect } from "react";
-import {
-  FaSun,
-  FaMoon,
-  FaSignOutAlt,
-  FaChevronDown,
-  FaBars,
-} from "react-icons/fa";
+import { FaSignOutAlt, FaChevronDown, FaBars } from "react-icons/fa";
 import { IoCalendarOutline } from "react-icons/io5";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTheme } from "@/context/ThemeContext";
-import { CgTemplate } from "react-icons/cg";
-import { RiGitRepositoryPrivateLine } from "react-icons/ri";
+import { RiGitRepositoryPrivateLine, RiShareForwardLine } from "react-icons/ri";
 import { BsTrash2 } from "react-icons/bs";
 import { GoTasklist } from "react-icons/go";
 import { FaRegNoteSticky } from "react-icons/fa6";
@@ -19,11 +12,16 @@ import Logo from "../../assets/logo.png";
 import { fetchRecentNotes } from "@/service/RecentNoteService";
 import { RecentNote } from "@/service/RecentNoteService";
 import { IoMailUnreadOutline } from "react-icons/io5";
+import { getListSharesByApprove, ShareResponse } from "@/service/ShareService";
+import { getNoteById } from "@/service/NoteService";
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isPrivateOpen, setIsPrivateOpen] = useState(false);
+  const [isPrivateOpen, setIsPrivateOpen] = useState(true);
   const [recentNotes, setRecentNotes] = useState<RecentNote[]>([]);
   const { darkMode, toggleDarkMode } = useTheme();
+  const [isShareOpen, setIsShareOpen] = useState(true);
+  const [sharedNotes, setSharedNotes] = useState<RecentNote[]>([]);
+  const [shares, setShares] = useState<ShareResponse[]>([]);
   const navigate = useNavigate();
 
   // Hàm rút gọn tiêu đề
@@ -35,7 +33,7 @@ const Sidebar = () => {
   useEffect(() => {
     const loadRecentNotes = async () => {
       try {
-        const notes = await fetchRecentNotes(4); // Lấy 4 ghi chú gần nhất
+        const notes = await fetchRecentNotes(10); // Lấy 4 ghi chú gần nhất
         console.log("Recent notes fetched:", notes);
         setRecentNotes(notes);
       } catch (error) {
@@ -46,8 +44,42 @@ const Sidebar = () => {
     loadRecentNotes();
   }, []);
 
+  //fetch list share
+  useEffect(() => {
+    const fetchShares = async () => {
+      try {
+        const data = await getListSharesByApprove();
+        setShares(data);
+      } catch (error) {
+        console.error("Error fetching shares:", error);
+      }
+    };
+    fetchShares();
+  }, []);
+
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
-  const togglePrivateSection = () => setIsPrivateOpen(!isPrivateOpen);
+  const togglePrivateSection = () => {
+    if (isCollapsed) {
+      setIsCollapsed(false); // Mở sidebar nếu đang thu gọn
+      setTimeout(() => setIsPrivateOpen(true), 300); // Đợi sidebar mở xong rồi mới mở Private
+    } else {
+      setIsPrivateOpen(!isPrivateOpen);
+    }
+  };
+
+  const handClickNote = async (noteId: number) => {
+    try {
+      localStorage.removeItem("recentNote");
+      const note = await getNoteById(noteId);
+      console.log("Note data:", note.result);
+      localStorage.setItem("recentNote", JSON.stringify(note.result));
+      const userId = localStorage.getItem("userId");
+      navigate(`/note/${noteId}`, { state: note.result });
+    } catch (error) {
+      console.error("Lỗi khi lấy dữ liệu note:", error);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("username");
     localStorage.removeItem("email");
@@ -62,7 +94,7 @@ const Sidebar = () => {
     <div
       className={`h-screen p-4 flex flex-col transition-all duration-300 shadow-lg
       ${isCollapsed ? "w-20" : "w-64"}
-      ${darkMode ? "bg-gray-900 text-white" : "bg-gray-300 text-gray-900"}`}
+      ${darkMode ? "bg-gray-900 text-white" : "bg-gray-200 text-gray-900"}`}
     >
       {/* Header - Logo & Toggle Button */}
       <div className="flex items-center justify-between mb-4">
@@ -116,7 +148,6 @@ const Sidebar = () => {
               label: "Trash",
               icon: <BsTrash2 className="text-xl" />,
             },
-         
           ].map(({ path, label, icon }) => (
             <li key={path}>
               <NavLink
@@ -141,7 +172,10 @@ const Sidebar = () => {
         <div className="mt-4">
           <button
             onClick={togglePrivateSection}
-            className="flex items-center justify-between w-full p-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-700"
+            className={`flex items-center justify-between w-full p-2 rounded-md transition-all 
+              ${
+                !isPrivateOpen ? "hover:bg-gray-300 dark:hover:bg-gray-700" : ""
+              }`}
           >
             <div className="flex items-center gap-3">
               <RiGitRepositoryPrivateLine className="text-xl" />
@@ -157,27 +191,80 @@ const Sidebar = () => {
           </button>
 
           {isPrivateOpen && (
-            <ul className="ml-4 mt-2 space-y-2">
-              {recentNotes.length > 0 ? (
-                recentNotes.map((note) => (
-                  <li key={note.noteId}>
-                    <button
-                      onClick={() => navigate(`/note/${note.noteId}`)}
-                      className="flex items-center gap-3 p-2 rounded-md transition-all hover:bg-gray-400 dark:hover:bg-gray-600 w-full text-left text-sm"
-                      title={note.note_title} // Hiển thị đầy đủ tiêu đề khi hover
-                    >
-                      {!isCollapsed && (
-                        <span>{truncateTitle(note.note_title)}</span>
-                      )}
-                    </button>
+            <div className="ml-4 mt-2 max-h-40 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800">
+              <ul className="space-y-2">
+                {recentNotes.length > 0 ? (
+                  recentNotes.map((note) => (
+                    <li key={note.noteId}>
+                      <button
+                        onClick={() => handClickNote(note.noteId)}
+                        className="flex items-center gap-3 p-2 rounded-md transition-all hover:bg-gray-400 dark:hover:bg-gray-600 w-full text-left text-sm"
+                        title={note.note_title}
+                      >
+                        {!isCollapsed && (
+                          <span>{truncateTitle(note.note_title)}</span>
+                        )}
+                      </button>
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-xs text-gray-500 dark:text-gray-400">
+                    {!isCollapsed && "No recent notes"}
                   </li>
-                ))
+                )}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* Shared Section */}
+        {/* Shared Section */}
+        <div className="mt-4">
+          <button
+            onClick={() => setIsShareOpen(!isShareOpen)}
+            className="flex items-center justify-between w-full p-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-700"
+          >
+            <div className="flex items-center gap-3">
+              <RiShareForwardLine className="text-xl" />
+              {!isCollapsed && <span>Shared</span>}
+            </div>
+            {!isCollapsed && (
+              <FaChevronDown
+                className={`transition-transform ${
+                  isShareOpen ? "rotate-180" : ""
+                }`}
+              />
+            )}
+          </button>
+
+          {isShareOpen && (
+            <div className="ml-4 mt-2 space-y-2">
+              {shares.length > 0 ? (
+                <ul>
+                  {shares.map((share) => (
+                    <li key={share.shareId}>
+                      <button
+                        onClick={() => handClickNote(share.noteId)}
+                        className="w-full text-left p-2 rounded-md transition-all hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center gap-2"
+                      >
+                        {share.type === "NOTE" ? (
+                          <FaRegNoteSticky className="text-lg" />
+                        ) : (
+                          <GoTasklist className="text-lg" />
+                        )}
+                        {!isCollapsed && (
+                          <span>{truncateTitle(share.title)}</span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               ) : (
-                <li className="text-xs text-gray-500 dark:text-gray-400">
-                  {!isCollapsed && "No recent notes"}
-                </li>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  No shared notes available
+                </p>
               )}
-            </ul>
+            </div>
           )}
         </div>
       </nav>

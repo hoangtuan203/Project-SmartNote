@@ -10,6 +10,8 @@ const GoogleCallback: React.FC = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const code = params.get("code");
+    const state = params.get("state");
+    console.log("Google OAuth2 state received:", state);
 
     if (code) {
       console.log("Google OAuth2 code received:", code);
@@ -32,9 +34,13 @@ const GoogleCallback: React.FC = () => {
           localStorage.setItem("avatar", picture);
           localStorage.setItem("accessToken", accessToken);
           localStorage.setItem("userId", userId);
-
+          
+          const redirectUrl = localStorage.getItem("redirectAfterLogin") || "/";
+          console.log("Redirecting to:", redirectUrl);
+          // localStorage.removeItem("redirectAfterLogin"); 
+          
           setTimeout(() => {
-            navigate("/"); // Chuyển hướng sau 1 giây
+            navigate(redirectUrl); // Chuyển hướng sau 1 giây
           }, 1000);
         })
         .catch((error) => {
@@ -48,7 +54,7 @@ const GoogleCallback: React.FC = () => {
     }
   }, [location, navigate]);
 
-  return null;
+  return null;   
 };
 
 export default GoogleCallback;

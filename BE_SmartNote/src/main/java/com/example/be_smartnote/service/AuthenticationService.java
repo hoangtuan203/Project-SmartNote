@@ -2,41 +2,71 @@ package com.example.be_smartnote.service;
 
 import com.example.be_smartnote.dto.request.AuthenticationRequest;
 import com.example.be_smartnote.dto.response.AuthenticationResponse;
+import com.example.be_smartnote.dto.response.InviteLinkResponse;
+import com.example.be_smartnote.entities.InviteStatus;
+import com.example.be_smartnote.entities.InviteToken;
+import com.example.be_smartnote.entities.Role;
 import com.example.be_smartnote.entities.User;
 import com.example.be_smartnote.exception.AppException;
 import com.example.be_smartnote.exception.ErrorCode;
+import com.example.be_smartnote.repository.InviteTokenRepository;
 import com.example.be_smartnote.repository.UserRepository;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import jakarta.transaction.Transactional;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Slf4j
 @Service
 public class AuthenticationService {
+    private final InviteTokenRepository inviteTokenRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthenticationService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    private final InviteService inviteService;
+
+    public AuthenticationService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                                 InviteTokenRepository inviteTokenRepository, InviteService inviteService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.inviteTokenRepository = inviteTokenRepository;
+        this.inviteService = inviteService;
     }
 
     @Value("${jwt.signerKey}")
     protected String signerKey;
+
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    private String GOOGLE_CLIENT_ID;
+
+    @Value("${spring.security.oauth2.client.registration.google.client-secret}")
+    private String GOOGLE_CLIENT_SECRET;
+
+    @Value("${spring.security.oauth2.client.registration.facebook.client-id}")
+    private String FACEBOOK_CLIENT_ID;
+
+    @Value("${spring.security.oauth2.client.registration.facebook.client-secret}")
+    private String FACEBOOK_CLIENT_SECRET;
 
     @NonFinal
     protected final String GRANT_TYPE = "authorization_code";
@@ -49,7 +79,6 @@ public class AuthenticationService {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
         Date issueTime = new Date();
         Date expireTime = new Date(Instant.ofEpochMilli(issueTime.getTime()).plus(2, ChronoUnit.HOURS).toEpochMilli());
-
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
                 .subject(user.getFullName())
                 .issuer("hoangtuan.com")
@@ -59,6 +88,7 @@ public class AuthenticationService {
                 .claim("user_id", user.getId())
                 .claim("username", user.getFullName())
                 .claim("email", user.getEmail())
+                .claim("role", user.getRole())
                 .build();
 
         JWSObject jwsObject = new JWSObject(header, new Payload(jwtClaimsSet.toJSONObject()));
@@ -150,6 +180,165 @@ public class AuthenticationService {
                 .email(email)
                 .authenticated(true)
                 .build();
+    }
 
+
+    //login google, facebook
+    public ResponseEntity<?> authenticateWithGoogle(String code) {
+        if (code == null) {
+            return ResponseEntity.badRequest().body("No code provided");
+        }
+
+        try {
+            String accessToken = getAccessTokenFromGoogle(code);
+            Map<String, Object> userInfo = getUserInfoFromGoogle(accessToken);
+            return handleOAuth2User(userInfo, "google", accessToken);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error during Google login: " + e.getMessage());
+        }
+    }
+
+    public ResponseEntity<?> authenticateWithFacebook(String code) {
+        if (code == null) {
+            return ResponseEntity.badRequest().body("No code provided");
+        }
+
+        try {
+            String accessToken = getAccessTokenFromFacebook(code);
+            Map<String, Object> userInfo = getUserInfoFromFacebook(accessToken);
+            return handleOAuth2User(userInfo, "facebook", accessToken);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error during Facebook login: " + e.getMessage());
+        }
+    }
+
+    private ResponseEntity<?> handleOAuth2User(Map<String, Object> userInfo, String provider, String accessToken) {
+        String email = (String) userInfo.get("email");
+        String name = (String) userInfo.get("name");
+        String picture = (String) userInfo.get("picture");
+
+        Optional<User> existingUser = userRepository.findByEmail(email);
+
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+
+            // Cập nhật email của người dùng
+            user.setEmail(email);
+            userRepository.save(user); // Lưu lại thông tin người dùng với email cập nhật
+
+            InviteToken inviteToken = inviteTokenRepository.findLatestInviteToken();
+            inviteToken.setEmail(email);
+
+            inviteTokenRepository.save(inviteToken);
+
+            AuthenticationService.TokenInfo tokenInfo = generateToken(user);
+            return ResponseEntity.ok(Map.of(
+                    "userId", user.getId(),
+                    "token", tokenInfo.token(),
+                    "accessToken", accessToken,
+                    "expiryTime", tokenInfo.expiryDate(),
+                    "email", email,
+                    "name", user.getFullName(),
+                    "picture", picture
+            ));
+        }
+
+        // Nếu không có người dùng, tạo mới
+        User newUser = new User();
+        newUser.setFullName(name);
+        newUser.setPassword("oauth2_default_password_" + provider);
+        newUser.setEmail(email); // Cập nhật email
+        newUser.setProvider(provider);
+        newUser.setAvatarUrl(picture);
+        newUser.setRole(Role.FULL_ACCESS);
+        User savedUser = userRepository.save(newUser);
+
+        InviteToken inviteToken = inviteTokenRepository.findLatestInviteToken();
+        inviteToken.setEmail(email);
+
+        inviteTokenRepository.save(inviteToken);
+
+        AuthenticationService.TokenInfo tokenInfo = generateToken(savedUser);
+
+        return ResponseEntity.ok(Map.of(
+                "userId", savedUser.getId(),
+                "token", tokenInfo.token(),
+                "accessToken", accessToken,
+                "expiryTime", tokenInfo.expiryDate(),
+                "email", email,
+                "name", name,
+                "picture", picture
+        ));
+    }
+
+    private String getAccessTokenFromGoogle(String code) throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+        String tokenUrl = "https://oauth2.googleapis.com/token";
+
+        Map<String, String> params = new HashMap<>();
+        params.put("code", code);
+        params.put("client_id", GOOGLE_CLIENT_ID);
+        params.put("client_secret", GOOGLE_CLIENT_SECRET);
+        params.put("redirect_uri", "http://localhost:5173/oauth2/redirect");
+        params.put("grant_type", "authorization_code");
+
+        ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, params, Map.class);
+
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new Exception("Failed to fetch access token");
+        }
+
+        return (String) response.getBody().get("access_token");
+    }
+
+    private String getAccessTokenFromFacebook(String code) throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+        String tokenUrl = "https://graph.facebook.com/v12.0/oauth/access_token"
+                + "?client_id=" + FACEBOOK_CLIENT_ID
+                + "&client_secret=" + FACEBOOK_CLIENT_SECRET
+                + "&redirect_uri=http://localhost:3000/oauth2/callback/facebook"
+                + "&code=" + code;
+
+        ResponseEntity<Map> response = restTemplate.getForEntity(tokenUrl, Map.class);
+
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new Exception("Failed to fetch access token");
+        }
+
+        return (String) response.getBody().get("access_token");
+    }
+
+    private Map<String, Object> getUserInfoFromGoogle(String accessToken) throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+        String userInfoUrl = "https://www.googleapis.com/oauth2/v3/userinfo";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(userInfoUrl, HttpMethod.GET, entity, Map.class);
+
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new Exception("Failed to fetch user info");
+        }
+
+        return response.getBody();
+    }
+
+    private Map<String, Object> getUserInfoFromFacebook(String accessToken) throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+        String userInfoUrl = "https://graph.facebook.com/me?fields=id,name,email,picture";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(userInfoUrl, HttpMethod.GET, entity, Map.class);
+
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new Exception("Failed to fetch user info");
+        }
+
+        return response.getBody();
     }
 }

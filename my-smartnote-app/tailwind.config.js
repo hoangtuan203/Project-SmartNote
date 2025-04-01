@@ -55,6 +55,20 @@ module.exports = {
           5: "hsl(var(--chart-5))",
         },
       },
+      keyframes: {
+        fadeIn: {
+          from: { opacity: 0 },
+          to: { opacity: 1 },
+        },
+        slideIn: {
+          from: { transform: "translateY(-20px)", opacity: 0 },
+          to: { transform: "translateY(0)", opacity: 1 },
+        },
+      },
+      animation: {
+        fadeIn: "fadeIn 0.3s ease-in-out",
+        slideIn: "slideIn 0.3s ease-in-out",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

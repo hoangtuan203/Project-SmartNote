@@ -28,14 +28,13 @@ export const handleToolbar = (
 export const createImageWithToolbar = (
   imageUrl: string,
   contentElement: HTMLDivElement
-) => {
+): HTMLDivElement => {
   const imgWrapper = document.createElement("div");
-  imgWrapper.className = "relative flex items-start justify-center gap-2 m-4";
+  imgWrapper.className = "relative group flex items-start justify-left gap-2 mb-4 mt-4";
   imgWrapper.setAttribute("contentEditable", "false");
 
   const imgContainer = document.createElement("div");
-  imgContainer.className =
-    "relative rounded-lg overflow-hidden inline-block";
+  imgContainer.className = "relative rounded-lg overflow-hidden inline-block";
 
   const img = document.createElement("img");
   img.src = imageUrl;
@@ -96,8 +95,6 @@ export const createImageWithToolbar = (
     startX = e.pageX;
   };
 
- 
-
   let isResizing = false;
   let startX = 0;
 
@@ -131,11 +128,13 @@ export const createImageWithToolbar = (
 
   // Add resize handles on both sides of the image
   const leftHandle = document.createElement("div");
-  leftHandle.className = "absolute left-0 top-0 h-full w-2  cursor-ew-resize";
+  leftHandle.className =
+    "absolute left-0 top-0 h-full w-2 bg-black opacity-0 group-hover:opacity-60 transition-opacity duration-200 cursor-ew-resize";
   leftHandle.addEventListener("mousedown", (e) => startResizing(e, "left"));
-
+  
   const rightHandle = document.createElement("div");
-  rightHandle.className = "absolute right-0 top-0 h-full w-2 cursor-ew-resize";
+  rightHandle.className =
+    "absolute right-0 top-0 h-full w-2 bg-black opacity-0 group-hover:opacity-60 transition-opacity duration-200 cursor-ew-resize";
   rightHandle.addEventListener("mousedown", (e) => startResizing(e, "right"));
 
   // Toolbar setup
@@ -203,4 +202,5 @@ export const createImageWithToolbar = (
   imgWrapper.appendChild(toolbar);
 
   contentElement.appendChild(imgWrapper);
+  return imgWrapper;
 };

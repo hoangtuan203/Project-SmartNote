@@ -105,14 +105,15 @@ public class TaskService {
         newTask.setPriority(request.getPriority());
         newTask.setDueDate(request.getDueDate());
         newTask.setIsNotified(0);
-        newTask.setCreatedAt(new Date().toInstant());
-        newTask.setUpdatedAt(new Date().toInstant());
+
+        // Sử dụng LocalDateTime thay vì Date
+        newTask.setCreatedAt(LocalDateTime.now());
+        newTask.setUpdatedAt(LocalDateTime.now());
 
         taskRepository.save(newTask);
 
         return taskMapper.toTaskResponse(newTask);
     }
-
 
     //update task
 
@@ -120,7 +121,6 @@ public class TaskService {
         Task task = taskRepository.findById(taskId).orElseThrow(() -> new AppException(ErrorCode.TASK_NOT_EXITS));
 
         User user = userRepository.findById(taskRequest.getUserId()).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        Instant instant = Instant.now();
 
         task.setUser(user);
         task.setTitle(taskRequest.getTitle());
@@ -128,8 +128,8 @@ public class TaskService {
         task.setDueDate(task.getDueDate());
         task.setPriority(task.getPriority());
         task.setStatus(task.getStatus());
-        task.setCreatedAt(instant);
-        task.setUpdatedAt(instant);
+        task.setCreatedAt(LocalDateTime.now());
+        task.setUpdatedAt(LocalDateTime.now());
 
         taskRepository.save(task);
 

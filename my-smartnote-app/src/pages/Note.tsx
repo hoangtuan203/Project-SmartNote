@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { useTheme } from "@/context/ThemeContext";
-import { fetchNotes, Note } from "@/service/NoteService"; // Import hàm gọi API
+import { fetchNotes, Note } from "@/service/NoteService";
 import { useNavigate } from "react-router-dom";
-import { MoreVertical } from "lucide-react"; // Import icon menu 3 chấm
+import { MoreVertical } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-
 import { Button } from "@/components/ui/button";
 import PaginationComponent from "@/components/Pagination";
 import { saveRecentNote } from "@/service/RecentNoteService";
+
 function NoteComponent() {
   const { darkMode } = useTheme();
   const [notes, setNotes] = useState<Note[]>([]);
@@ -20,28 +20,15 @@ function NoteComponent() {
   const [totalPages, setTotalPages] = useState(0);
   const notePages = 5;
 
-  // Hàm thay đổi trang
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  const handlePageChange = (page: number) => setCurrentPage(page);
 
-  // Hàm xử lý double click để điều hướng
   const handleDoubleClick = (note: Note) => {
     setRecentNote(note);
-    localStorage.setItem("recentNote", JSON.stringify(note)); // Lưu vào localStorage
-    // Gọi hàm saveRecentNote để lưu vào database
+    localStorage.setItem("recentNote", JSON.stringify(note));
     const userId = localStorage.getItem("userId");
-    console.log("userId: ", userId);
     saveRecentNote(Number(userId), note.noteId)
-      .then(() => {
-        console.log("Lưu recent note thành công:", note.noteId);
-      })
-      .catch((error) => {
-        console.error("Lỗi khi lưu recent note:", error);
-      });
-
-    console.log("data note: ", JSON.stringify(note));
-
+      .then(() => console.log("Lưu recent note thành công:", note.noteId))
+      .catch((error) => console.error("Lỗi khi lưu recent note:", error));
     navigate(`/note/${note.noteId}`, { state: note });
   };
 
@@ -56,7 +43,6 @@ function NoteComponent() {
     try {
       setLoading(true);
       const data = await fetchNotes(currentPage, notePages);
-
       setNotes(data?.notes || []);
       setTotalPages(data?.totalPages || 0);
     } catch (error) {
@@ -68,52 +54,49 @@ function NoteComponent() {
 
   useEffect(() => {
     const storedNote = localStorage.getItem("recentNote");
-    if (storedNote) {
-      setRecentNote(JSON.parse(storedNote));
-    }
+    if (storedNote) setRecentNote(JSON.parse(storedNote));
     loadNotes();
   }, [currentPage]);
 
   const toggleFavorite = (id: number) => {
-    const updatedNotes = notes.map((note) => {
-      if (note.noteId === id) {
-        return { ...note, is_pinned: !note.is_pinned };
-      }
-      return note;
-    });
-
+    const updatedNotes = notes.map((note) =>
+      note.noteId === id ? { ...note, is_pinned: !note.is_pinned } : note
+    );
     setNotes(updatedNotes);
     setFavorites(updatedNotes.filter((note) => note.is_pinned));
   };
 
   if (loading) {
-    return <p className="text-center text-lg">Loading notes...</p>;
+    return (
+      <p className="text-center text-lg font-medium text-gray-500 dark:text-gray-400">
+        Loading notes...
+      </p>
+    );
   }
 
   return (
-    <div
-      className={`p-4`}
-    >
-      {/* Danh sách Ghi chú yêu thích */}
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold mb-2">Favorite Notes</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="container mx-auto p-6">
+      {/* Favorite Notes Section */}
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
+          Favorite Notes
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {favorites.length > 0 ? (
             favorites.map((note) => (
               <div
                 key={note.noteId}
-                className={`rounded-md shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden ${
+                className={`rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border dark:border-gray-700 ${
                   darkMode ? "bg-gray-800 text-white" : "bg-white text-black"
-                }`}
+                } flex flex-col h-full`}
                 onDoubleClick={() => handleDoubleClick(note)}
               >
                 <div
-                  className={`flex justify-between items-center py-2 px-4 font-semibold text-black ${
+                  className={`flex justify-between items-center py-3 px-5 font-semibold ${
                     colorMap[note.color] || "bg-gray-500"
-                  }`}
+                  } text-white`}
                 >
                   {note.title}
-                  {/* Dropdown menu */}
                   <DropdownMenu.Root>
                     <DropdownMenu.Trigger asChild>
                       <Button
@@ -124,22 +107,21 @@ function NoteComponent() {
                         <MoreVertical className="text-white" />
                       </Button>
                     </DropdownMenu.Trigger>
-
                     <DropdownMenu.Portal>
-                      <DropdownMenu.Content className="bg-white shadow-lg rounded-md p-2 min-w-[150px]">
+                      <DropdownMenu.Content className="bg-white shadow-md rounded-lg p-2 min-w-[160px] dark:bg-gray-800">
                         <DropdownMenu.Item
-                          className="px-2 py-1 hover:bg-gray-100 cursor-pointer rounded"
+                          className="px-3 py-2 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer rounded"
                           onClick={(e) => {
-                            e.stopPropagation(); // Ngăn chặn event click vào Card
+                            e.stopPropagation();
                             console.log("Chỉnh sửa note:", note.noteId);
                           }}
                         >
                           ✏️ Chỉnh sửa
                         </DropdownMenu.Item>
                         <DropdownMenu.Item
-                          className="px-2 py-1 hover:bg-red-100 text-red-500 cursor-pointer rounded"
+                          className="px-3 py-2 hover:bg-red-100 dark:hover:bg-red-700 text-red-600 dark:text-red-400 cursor-pointer rounded"
                           onClick={(e) => {
-                            e.stopPropagation(); // Ngăn chặn event click vào Card
+                            e.stopPropagation();
                             console.log("Xóa note:", note.noteId);
                           }}
                         >
@@ -149,120 +131,15 @@ function NoteComponent() {
                     </DropdownMenu.Portal>
                   </DropdownMenu.Root>
                 </div>
-
-                <div className="p-4">
-                  <p className="text-gray-400">{note.content}</p>
-
-                  {/* 🕒 Hiển thị ngày tạo ghi chú */}
-                  <div className="flex items-center text-sm text-red-500 mt-2">
-                    🕑
-                    {new Date(note.createdAt).toLocaleString()}
-                  </div>
-                  <div className="flex justify-end items-center mt-2">
-                    <button
-                      className="text-xl"
-                      onClick={() => toggleFavorite(note.noteId)}
-                    >
-                      {note.is_pinned ? (
-                        <FaHeart className="text-red-500" />
-                      ) : (
-                        <FaRegHeart className="text-gray-400" />
-                      )}
-                    </button>
-                  </div>
+                <div className="p-5 flex-grow">
+                  <p className="text-gray-600 dark:text-gray-300">
+                    {note.content}
+                  </p>
                 </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-500">No favorite notes</p>
-          )}
-        </div>
-      </div>
-
-      {/* Đường kẻ phân cách */}
-      <div
-        className={`my-4 border-t-2 ${
-          darkMode ? "border-gray-700" : "border-gray-300"
-        }`}
-      ></div>
-
-      {/* Tất cả Ghi chú */}
-      <div>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">All Notes</h2>
-          {/* PaginationComponent */}
-          <div className="mt-4">
-            <PaginationComponent
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {notes.map((note) => (
-            <div
-              key={note.noteId}
-              className={`rounded-md shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden ${
-                darkMode ? "bg-gray-800 text-white" : "bg-white text-black"
-              }`}
-              onDoubleClick={() => handleDoubleClick(note)}
-            >
-              <div
-                className={`flex justify-between items-center py-2 px-4 font-semibold text-black ${
-                  colorMap[note.color] || "bg-gray-500"
-                }`}
-              >
-                {note.title}
-                {/* Dropdown menu */}
-                <DropdownMenu.Root>
-                  <DropdownMenu.Trigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreVertical className="text-white" />
-                    </Button>
-                  </DropdownMenu.Trigger>
-
-                  <DropdownMenu.Portal>
-                    <DropdownMenu.Content className="bg-white shadow-lg rounded-md p-2 min-w-[150px]">
-                      <DropdownMenu.Item
-                        className="px-2 py-1 hover:bg-gray-100 cursor-pointer rounded"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Ngăn chặn event click vào Card
-                          console.log("Chỉnh sửa note:", note.noteId);
-                        }}
-                      >
-                        ✏️ Chỉnh sửa
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Item
-                        className="px-2 py-1 hover:bg-red-100 text-red-500 cursor-pointer rounded"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Ngăn chặn event click vào Card
-                          console.log("Xóa note:", note.noteId);
-                        }}
-                      >
-                        🗑️ Xóa
-                      </DropdownMenu.Item>
-                    </DropdownMenu.Content>
-                  </DropdownMenu.Portal>
-                </DropdownMenu.Root>
-              </div>
-              <div className="p-4">
-                <p className="text-gray-400">{note.content}</p>
-
-                {/* 🕒 Hiển thị ngày tạo ghi chú */}
-                <div className="flex items-center text-sm text-red-500 mt-2">
-                  🕑
-                  {new Date(note.createdAt).toLocaleString()}
-                </div>
-
-                <div className="flex justify-end items-center mt-2">
+                <div className="flex justify-between items-center px-5 py-3 border-t dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 mt-auto">
+                  <span>🕑 {new Date(note.createdAt).toLocaleString()}</span>
                   <button
-                    className="text-xl"
+                    className="text-2xl"
                     onClick={() => toggleFavorite(note.noteId)}
                   >
                     {note.is_pinned ? (
@@ -273,10 +150,101 @@ function NoteComponent() {
                   </button>
                 </div>
               </div>
+            ))
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400 italic">
+              No favorite notes yet
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* Divider */}
+      <hr className="my-8 border-t border-gray-200 dark:border-gray-700" />
+
+      {/* All Notes Section */}
+      <section>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+            All Notes
+          </h2>
+          <PaginationComponent
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {notes.map((note) => (
+            <div
+              key={note.noteId}
+              className={`rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border dark:border-gray-700 ${
+                darkMode ? "bg-gray-800 text-white" : "bg-white text-black"
+              } flex flex-col h-full`}
+              onDoubleClick={() => handleDoubleClick(note)}
+            >
+              <div
+                className={`flex justify-between items-center py-3 px-5 font-semibold ${
+                  colorMap[note.color] || "bg-gray-500"
+                } text-white`}
+              >
+                {note.title}
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="text-white" />
+                    </Button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content className="bg-white shadow-md rounded-lg p-2 min-w-[160px] dark:bg-gray-800">
+                      <DropdownMenu.Item
+                        className="px-3 py-2 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer rounded"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log("Chỉnh sửa note:", note.noteId);
+                        }}
+                      >
+                        ✏️ Chỉnh sửa
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        className="px-3 py-2 hover:bg-red-100 dark:hover:bg-red-700 text-red-600 dark:text-red-400 cursor-pointer rounded"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log("Xóa note:", note.noteId);
+                        }}
+                      >
+                        🗑️ Xóa
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
+              </div>
+              <div className="p-5 flex-grow">
+                <p className="text-gray-600 dark:text-gray-300">
+                  {note.content}
+                </p>
+              </div>
+              <div className="flex justify-between items-center px-5 py-3 border-t dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 mt-auto">
+                <span>🕑 {new Date(note.createdAt).toLocaleString()}</span>
+                <button
+                  className="text-2xl"
+                  onClick={() => toggleFavorite(note.noteId)}
+                >
+                  {note.is_pinned ? (
+                    <FaHeart className="text-red-500" />
+                  ) : (
+                    <FaRegHeart className="text-gray-400" />
+                  )}
+                </button>
+              </div>
             </div>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

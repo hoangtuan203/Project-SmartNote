@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS `comments` (
 ) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table smart_note.comments: ~1 rows (approximately)
-INSERT INTO `comments` (`id`, `user_id`, `note_id`, `content`, `created_at`) VALUES
+REPLACE INTO `comments` (`id`, `user_id`, `note_id`, `content`, `created_at`) VALUES
 	(13, 3, 3, ' @Nguyen Hoang Tuan  📄 Học lập trình Java Spring Boot ', '2025-03-23 07:23:01');
 
 -- Dumping structure for table smart_note.files
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS `notes` (
 ) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table smart_note.notes: ~42 rows (approximately)
-INSERT INTO `notes` (`id`, `user_id`, `title`, `content`, `is_pinned`, `color`, `created_at`, `updated_at`, `image_url`) VALUES
+REPLACE INTO `notes` (`id`, `user_id`, `title`, `content`, `is_pinned`, `color`, `created_at`, `updated_at`, `image_url`) VALUES
 	(3, 3, 'Học lập trình Java Spring Boot', '', 0, '#ffffff', '2025-03-04 07:05:34', '2025-03-24 14:53:46', NULL),
 	(4, 2, 'Chia công việc TKGD', '### **1. Thanh điều hướng (Header - Navigation Bar)**\r\n\r\n📍 **Vị trí:** Trên cùng trang web, hiển thị trên tất cả các trang.\r\n\r\n📍 **Chức năng:**\r\n\r\n- **Logo** (góc trái)\r\n- **Menu danh mục món ăn** (Pizza, Burger, Đồ ', 0, 'blue', '2025-03-04 07:06:19', '2025-03-04 15:23:03', NULL),
 	(5, 2, 'Đồ Án Chuyên Ngành', '- Token izer\r\n- Word Embedding\r\n- Postional Encoding\r\n- Anttention\r\n- Residinal + Norm', 0, '#ffffff', '2025-03-04 07:07:13', '2025-03-24 11:01:37', NULL),
@@ -173,7 +173,7 @@ CREATE TABLE IF NOT EXISTS `note_images` (
 ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Dumping data for table smart_note.note_images: ~5 rows (approximately)
-INSERT INTO `note_images` (`id`, `image_url`, `note_id`) VALUES
+REPLACE INTO `note_images` (`id`, `image_url`, `note_id`) VALUES
 	(9, '/uploads/images/e4ec5f99-da08-403e-8736-baa6c7cc50ec.jpg', 8),
 	(10, '/uploads/images/2f6026c4-afdf-4eca-ba15-c464359d6ce0.png', 8),
 	(11, '/uploads/images/57d01786-9bb8-4ad9-ba9f-92f5ae38b941.jpg', 8),
@@ -206,8 +206,8 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table smart_note.notifications: ~10 rows (approximately)
-INSERT INTO `notifications` (`id`, `user_id`, `message`, `is_read`, `created_at`) VALUES
+-- Dumping data for table smart_note.notifications: ~9 rows (approximately)
+REPLACE INTO `notifications` (`id`, `user_id`, `message`, `is_read`, `created_at`) VALUES
 	(1, 3, 'Còn 1 tiếng nữa là đến hạn task 1', 0, '2025-03-08 09:38:32'),
 	(2, 3, 'Còn 1 tiếng nữa là đến hạn task 2', 0, '2025-03-08 09:38:40'),
 	(3, 3, 'thông báo 3', 0, '2025-03-09 06:20:41'),
@@ -233,15 +233,15 @@ CREATE TABLE IF NOT EXISTS `recent_notes` (
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table smart_note.recent_notes: ~8 rows (approximately)
-INSERT INTO `recent_notes` (`id`, `user_id`, `note_id`, `last_opened`) VALUES
+REPLACE INTO `recent_notes` (`id`, `user_id`, `note_id`, `last_opened`) VALUES
 	(3, 3, 8, '2025-03-23 16:28:32'),
-	(4, 3, 3, '2025-03-25 13:53:01'),
+	(4, 3, 3, '2025-03-27 06:09:50'),
 	(5, 3, 5, '2025-03-24 10:52:20'),
 	(6, 3, 7, '2025-03-24 13:04:52'),
 	(7, 3, 4, '2025-03-24 10:52:16'),
 	(8, 3, 14, '2025-03-24 11:01:52'),
 	(9, 3, 15, '2025-03-24 12:12:59'),
-	(10, 3, 44, '2025-03-25 09:59:46');
+	(10, 3, 44, '2025-03-27 06:10:08');
 
 -- Dumping structure for table smart_note.reminders
 CREATE TABLE IF NOT EXISTS `reminders` (
@@ -293,7 +293,7 @@ CREATE TABLE IF NOT EXISTS `tasks` (
 ) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table smart_note.tasks: ~28 rows (approximately)
-INSERT INTO `tasks` (`id`, `user_id`, `title`, `description`, `due_date`, `status`, `priority`, `created_at`, `updated_at`, `is_notified`) VALUES
+REPLACE INTO `tasks` (`id`, `user_id`, `title`, `description`, `due_date`, `status`, `priority`, `created_at`, `updated_at`, `is_notified`) VALUES
 	(1, 1, 'Học tiếng Anh trong 30 ngày', 'Học grammar, vocabulary , làm bài tập cho từng cấu trúc ngữ pháp, luyện trên dictionary, luyện study4 and làm đề với mỗi part ...', '2025-03-31 20:50:05', 'Đang hoàn thành ', 'Trung Bình', '2025-03-04 13:51:53', '2025-03-04 16:19:49', 0),
 	(2, 3, 'Đồ Án Chuyên Ngành', 'Thực hiện dự án website cá nhân sử dụng React Typescript + Spring Boot trong 10 tuần', '2025-04-25 20:52:48', 'Đang hoàn thành', 'Cao', '2025-03-04 13:54:16', '2025-03-04 16:19:53', 0),
 	(3, 3, 'Làm Báo Cáo Chuyên Đề Seminar', 'Thực hiện nghiên cứu báo cáo về Neuron và network và nộp tiểu luận ở tuần 10', '2025-04-27 20:54:27', 'Chưa làm', 'Cao', '2025-03-04 13:55:49', '2025-03-04 16:19:55', 0),
@@ -364,7 +364,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table smart_note.users: ~3 rows (approximately)
-INSERT INTO `users` (`id`, `full_name`, `email`, `password`, `avatar_url`, `provider`) VALUES
+REPLACE INTO `users` (`id`, `full_name`, `email`, `password`, `avatar_url`, `provider`) VALUES
 	(1, 'Nguyen Hoang Tuan', 'nguyenvana@gmail.com', '$2a$10$U837cixRAYLmwr3svhsUAOpxTQ.5HbSCoEMQ58BrOhN953KJjfFva', 'avatar', 'local'),
 	(2, 'Nguyen Van A', 'nguyenvanaa@gmail.com', '$2a$10$0zLnPXUdbM22y3NwRBk/2.WSu0JG0yiQSwnB9VINRN6m.wqWgJ8qu', 'avatar', 'local'),
 	(3, 'Nguyễn Hoàng Tuấn', 'nguyenhoangtuan12102003@gmail.com', 'default password google', 'abc', 'google');

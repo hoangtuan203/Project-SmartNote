@@ -45,10 +45,10 @@ public class Task {
     private String priority;
 
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private LocalDateTime updatedAt;
     @Column(name = "is_notified")
     private int isNotified = 0;
 

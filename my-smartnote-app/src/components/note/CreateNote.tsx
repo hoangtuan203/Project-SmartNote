@@ -23,11 +23,11 @@ import { formatDistanceToNow } from "date-fns";
 import { getAllNotes } from "@/service/NoteService";
 import { getAllUser } from "@/service/UserService";
 import NoteContent from "@/components/note/NoteContent";
-import { getNoteImages, NoteImage } from "@/service/NoteImageService";
 export default function CreateNote() {
+  const [isHovered, setIsHovered] = useState(false);
   const [noteContent, setNoteContent] = useState("");
-  const [title, setTitle] = useState("Untitled Note");
-  const [icon, setIcon] = useState("📝");
+  const [title, setTitle] = useState("New Page");
+  const [icon, setIcon] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [coverImage, setCoverImage] = useState("");
   const [comments, setComments] = useState<Comment[]>([]);
@@ -54,6 +54,15 @@ export default function CreateNote() {
   const [mentionNoteList, setMentionNoteList] = useState<
     { id: number; title: string }[]
   >([]);
+
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [title]);
 
   // Hàm chèn placeholder vào dòng hiện tại
   const loadUserNote = async () => {
@@ -82,7 +91,6 @@ export default function CreateNote() {
       console.error("Error loading notes:", error);
     }
   };
-
 
   const samplePeopleList =
     mentionPeopleList.length > 0
@@ -344,20 +352,59 @@ export default function CreateNote() {
         </div>
       )}
       {/* Tiêu đề có thể chỉnh sửa */}
-      <div className="flex items-center gap-2">
-        <span
-          className="text-3xl cursor-pointer"
-          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+      <div className="flex items-center justify-center  max-w-[1000px]">
+        <div
+          className="relative w-full max-w-2xl mx-auto"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
-          {icon}
-        </span>
-        <input
-          className="w-full text-3xl font-bold border-none outline-none bg-transparent"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
+            <div
+            className={`flex gap-3 mt-3 text-gray-500 transition-opacity duration-200 ${
+              isHovered ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <Button
+              variant="ghost"
+              className="flex items-center gap-1"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            >
+              <Image size={16} /> Add icon
+            </Button>
+            <Button
+              variant="ghost"
+              className="flex items-center gap-1"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Plus size={16} /> Add cover
+            </Button>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+            />
+            <Button
+              variant="ghost"
+              className="flex items-center gap-1"
+              onClick={() => setIsCommentBoxVisible((prev) => !prev)}
+            >
+              <MessageCircle size={16} /> Comment
+            </Button>
+          </div>
+          {/* Title Input */}
+          <textarea
+            ref={textareaRef}
+            className="w-full text-3xl font-bold border-none outline-none bg-transparent resize-none overflow-hidden break-words text-left"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            rows={1}
+          />
+
+      
+        
+        </div>
       </div>
-      {/* Emoji Picker */}
       {showEmojiPicker && (
         <div
           ref={emojiPickerRef}
@@ -372,37 +419,6 @@ export default function CreateNote() {
         </div>
       )}
       {/* Các nút tùy chọn */}
-      <div className="flex gap-3 mt-3 text-gray-500">
-        <Button
-          variant="ghost"
-          className="flex items-center gap-1"
-          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-        >
-          <Image size={16} /> Add icon
-        </Button>
-        <Button
-          variant="ghost"
-          className="flex items-center gap-1"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <Plus size={16} /> Add cover
-        </Button>
-        <input
-          type="file"
-          accept="image/*"
-          className="hidden"
-          ref={fileInputRef}
-          onChange={handleImageUpload}
-        />
-
-        <Button
-          variant="ghost"
-          className="flex items-center gap-1"
-          onClick={() => setIsCommentBoxVisible((prev) => !prev)}
-        >
-          <MessageCircle size={16} /> Comment
-        </Button>
-      </div>
       {/* Danh sách comment */}
       {isCommentBoxVisible && (
         <div className="mt-8">
@@ -570,7 +586,6 @@ export default function CreateNote() {
                         <span className="text-blue-400 font-bold">FILE</span>
                       )}
                     </div>
-
                     {/* Tên file */}
                     <p className="truncate max-w-[100px]">{file.name}</p>
 
@@ -591,9 +606,8 @@ export default function CreateNote() {
           </div>
         </div>
       )}
-
       <div>
-        <NoteContent/>
+        <NoteContent />
       </div>
     </div>
   );

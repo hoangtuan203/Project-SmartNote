@@ -14,6 +14,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Service
 public class NotificationService {
@@ -36,7 +37,7 @@ public class NotificationService {
         Notification notification = new Notification();
         notification.setMessage(message);
         notification.setIsRead(false);
-        notification.setCreatedAt(Instant.now());
+        notification.setCreatedAt(LocalDateTime.now());
         notification.setUser(task.getUser()); // Gán user cho thông báo
 
         // Lưu vào database

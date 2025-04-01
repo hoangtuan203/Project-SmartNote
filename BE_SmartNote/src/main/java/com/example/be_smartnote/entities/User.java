@@ -31,4 +31,7 @@ public class User {
     @Column(name = "provider", nullable = false)
     private String provider;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private Role role;
 }
