@@ -21,12 +21,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -57,8 +57,8 @@ public class NoteService {
                 .collect(Collectors.toList());
     }
 
-    public NoteResponseWrapper getListNotesByPageable(Pageable pageable) {
-        Page<Note> notePage = noteRepository.findAllByPageable(pageable);
+    public NoteResponseWrapper getListNotesByPageable(Pageable pageable, Long userId) {
+        Page<Note> notePage = noteRepository.findAllByUserId(pageable, userId);
         Page<NoteResponse> noteResponsePage = notePage.map(noteMapper::toNoteResponse);
         return new NoteResponseWrapper(
                 noteResponsePage.getTotalPages(),
@@ -77,13 +77,13 @@ public class NoteService {
         User user = userRepository.findById(request.getUserId()).orElseThrow(
                 () -> new AppException(ErrorCode.USER_NOT_EXISTED));
         Note note = noteMapper.toNote(request);
-        Instant instant = Instant.now();
+
 
         note.setTitle(request.getTitle());
         note.setContent(request.getContent());
         note.setColor(request.getColor());
-        note.setCreatedAt(instant);
-        note.setUpdatedAt(instant);
+        note.setCreatedAt(LocalDateTime.now());
+        note.setUpdatedAt(LocalDateTime.now());
         note.setIsPinned(false);
 
         // Lưu note trước để lấy ID
@@ -142,40 +142,69 @@ public class NoteService {
     }
 
 
-    // Update note with multiple images
-    public NoteResponse updateNote(Long noteId, NoteRequest request, List<MultipartFile> images) {
+    public NoteResponse updateNote(Long noteId, NoteRequest request, List<MultipartFile> images) throws IOException {
         log.info("service");
+
         Note note = noteRepository.findById(noteId).orElseThrow(
                 () -> new AppException(ErrorCode.NOTE_NOT_EXITS));
-        User user = userRepository.findById(request.getUserId()).orElseThrow(
-                () -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        // Cập nhật các trường của Note
         note.setTitle(request.getTitle());
         note.setContent(request.getContent());
         note.setColor(request.getColor());
         note.setIsPinned(false);
-        note.setUpdatedAt(Instant.now());
+        note.setUpdatedAt(LocalDateTime.now());
 
-        // Xóa các ảnh cũ (nếu có) nhưng không xóa tập hợp
-        if (note.getImages() != null && !note.getImages().isEmpty()) {
-            note.getImages().clear();
+        Set<String> currentImageUrls = new HashSet<>();
+        if (request.getImageUrls() != null) {
+            currentImageUrls.addAll(request.getImageUrls());
+
+            Iterator<NoteImage> iterator = note.getImages().iterator();
+            while (iterator.hasNext()) {
+                NoteImage noteImage = iterator.next();
+                if (request.getImageUrls().contains(noteImage.getImageUrl())) {
+                    // Giữ lại hình ảnh, không xoá
+                    currentImageUrls.remove(noteImage.getImageUrl());
+                } else {
+                    iterator.remove(); // Xoá an toàn trong khi duyệt
+                    deleteImageFromStorage(noteImage.getImageUrl());
+                }
+            }
+
         }
 
-        // Thêm ảnh mới vào tập hợp
         for (MultipartFile image : images) {
-            log.info("Uploading image...");
+            log.info("Uploading new image...");
             String imageUrl = uploadImage(image);
-            NoteImage noteImage = new NoteImage();
-            noteImage.setImageUrl(imageUrl);
-            noteImage.setNote(note);
-            note.getImages().add(noteImage); // Thêm trực tiếp vào tập hợp
+            currentImageUrls.add(imageUrl);
+
+
+            Optional<NoteImage> existingImage = note.getImages().stream()
+                    .filter(img -> img.getImageUrl().equals(imageUrl))
+                    .findFirst();
+
+            if (existingImage.isEmpty()) {
+                NoteImage noteImage = new NoteImage();
+                noteImage.setImageUrl(imageUrl);
+                noteImage.setNote(note);
+                note.getImages().add(noteImage);
+                note.setUpdatedAt(LocalDateTime.now());
+            }
         }
 
-        // Lưu đối tượng note (sẽ tự động lưu các hình ảnh)
         noteRepository.save(note);
 
         return noteMapper.toNoteResponse(note);
+    }
+
+
+    private void deleteImageFromStorage(String imageUrl) throws IOException {
+        try {
+            Path path = Paths.get("uploads/" + imageUrl);
+            Files.deleteIfExists(path); // Xóa tệp hình ảnh khỏi thư mục uploads
+        } catch (IOException e) {
+            log.error("Failed to delete image: {}", imageUrl);
+            throw new IOException(e.getMessage());
+        }
     }
 
     //get images url
@@ -192,15 +221,11 @@ public class NoteService {
     }
 
     //delete image in note
-    public boolean deleteImageWithNote(Long imageId) {
-        var result  = false;
-        NoteImage noteImage = noteImageRepository.findById(imageId)
-                .orElseThrow(() -> new AppException(ErrorCode.NOTE_NOT_EXITS));
-
-        noteImageRepository.deleteById(imageId);
-
+    public boolean deleteImageWithNote(Long id) {
+        var result = false;
+        noteImageRepository.deleteById(id);
         return true;
-
     }
+
 
 }

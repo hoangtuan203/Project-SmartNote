@@ -6,7 +6,10 @@ import { fetchTask, Task } from "@/service/TaskService";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import PaginationComponent from "../Pagination";
-
+import { deleteTask } from "@/service/TaskService";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer } from "react-toastify";
 function getDaysLeft(dueDate: string) {
   if (!dueDate) return "Không xác định";
 
@@ -28,7 +31,6 @@ function getDaysLeft(dueDate: string) {
   return ` Còn ${diffDays} ngày`;
 }
 
-
 const priorityOrder: Record<string, number> = {
   Cao: 3,
   "Trung Bình": 2,
@@ -40,6 +42,7 @@ const priorityHeaderColors: Record<string, string> = {
   "Trung Bình": "bg-yellow-400 text-black",
   Thấp: "bg-green-400 text-black",
 };
+
 
 export default function TaskList() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -53,7 +56,6 @@ export default function TaskList() {
     setCurrentPage(page);
   };
 
-
   const handleDoubleClick = (id: number) => {
     navigate(`/task/${id}`);
   };
@@ -61,7 +63,9 @@ export default function TaskList() {
   useEffect(() => {
     const loadTasks = async () => {
       try {
-        const data = await fetchTask(currentPage, tasksPerPage);
+        const userId = localStorage.getItem("userId")
+        const convertUserIdNumber = Number(userId)
+        const data = await fetchTask(currentPage, tasksPerPage, convertUserIdNumber );
         console.log("Tasks:", data);
         setTasks(data?.tasks || []); // Cập nhật danh sách công việc
         setTotalPages(data?.totalPages ? data.totalPages : 0);
@@ -84,6 +88,7 @@ export default function TaskList() {
 
   return (
     <div className="w-full h-full p-4">
+      <ToastContainer position="top-right" autoClose={3000} />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortedTasks.map((task, index) => (
           <Card
@@ -174,9 +179,22 @@ export default function TaskList() {
                   variant="ghost"
                   size="icon"
                   className="text-red-500"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    console.log("Xóa task:", task.taskId);
+                  onClick={async (e) => {
+                    e.stopPropagation(); // Prevent the dropdown from closing or the card from being selected
+                    try {
+                      // Call the deleteTask function
+                      const success = await deleteTask(task.taskId);
+                      toast.success("Task deleted successfully");
+                      if (success) {
+                        // Remove the deleted task from the tasks list
+                        setTasks((prevTasks) =>
+                          prevTasks.filter((t) => t.taskId !== task.taskId)
+                        );
+                       
+                      }
+                    } catch (error) {
+                      console.error("Error deleting task:", error);
+                    }
                   }}
                 >
                   <Trash2 size={16} />

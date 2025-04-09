@@ -18,8 +18,8 @@ public class RecentNoteController {
     private RecentNoteService recentNoteService;
 
     @GetMapping("/getListByQuantity")
-    public ApiResponse<List<RecentNoteResponse>> getListRecentNote(@RequestParam(defaultValue = "10") int quantity) {
-        List<RecentNoteResponse> result = recentNoteService.getListRecentNote(quantity);
+    public ApiResponse<List<RecentNoteResponse>> getListRecentNote(@RequestParam(defaultValue = "10") int quantity, @RequestParam(name = "userId") Long userId) {
+        List<RecentNoteResponse> result = recentNoteService.getListRecentNote(quantity, userId);
 
         return ApiResponse.<List<RecentNoteResponse>>builder()
                 .code(1000)
@@ -29,8 +29,8 @@ public class RecentNoteController {
     }
 
     @PostMapping("/save")
-    public ApiResponse<List<RecentNoteResponse>> saveRecentNote(@RequestParam Long userId, @RequestParam Long noteId){
-        List<RecentNoteResponse> result = recentNoteService.saveOrUpdateRecentNote(userId,noteId);
+    public ApiResponse<List<RecentNoteResponse>> saveRecentNote(@RequestParam Long userId, @RequestParam Long noteId) {
+        List<RecentNoteResponse> result = recentNoteService.saveOrUpdateRecentNote(userId, noteId);
         return ApiResponse.<List<RecentNoteResponse>>builder()
                 .code(1000)
                 .message("save recent note success")

@@ -44,26 +44,55 @@ public class InviteService {
     private final ShareRepository shareRepository;
 
     // Gửi email mời với role (không liên kết note/task)
-    public void sendInvitation(String email, Role role) {
+    public void sendInvitation(String email, Role role, Long noteId, Long taskId, Long userId) {
+        // Ensure that either noteId or taskId is provided, but not both.
+        if (noteId != null && taskId != null) {
+            throw new IllegalArgumentException("Invitation can only be associated with either a note or a task, not both.");
+        }
+
+        // Generate a unique token for the invitation
         String token = UUID.randomUUID().toString();
         InviteToken inviteToken = new InviteToken();
 
         inviteToken.setEmail(email);
         inviteToken.setRole(role);
         inviteToken.setToken(token);
-        inviteToken.setExpiryDate(LocalDateTime.now().plusDays(7)); // Hết hạn sau 7 ngày
+        inviteToken.setExpiryDate(LocalDateTime.now().plusDays(7)); // Token expires after 7 days
         inviteToken.setStatus(InviteStatus.PENDING);
+
+        if (userId != null) {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+            inviteToken.setUser(user);
+        }
+        // Associate the invitation with a note or task, if provided
+        if (noteId != null) {
+            Note note = noteRepository.findById(noteId)
+                    .orElseThrow(() -> new IllegalArgumentException("Note not found with id: " + noteId));
+            inviteToken.setNote(note);
+            inviteToken.setTask(null);  // Set task to null if a note is provided
+        } else if (taskId != null) {
+            Task task = taskRepository.findById(taskId)
+                    .orElseThrow(() -> new IllegalArgumentException("Task not found with id: " + taskId));
+            inviteToken.setTask(task);
+            inviteToken.setNote(null);  // Set note to null if a task is provided
+        }
+
+        // Save the invitation token in the repository
         inviteTokenRepository.save(inviteToken);
 
+        // Construct the invitation link
         String link = FRONTEND_URL + "/join?token=" + token;
         String message = "Bạn đã được mời vào hệ thống. Nhấp vào đây để tham gia: " + link;
 
+        // Send the invitation email
         SimpleMailMessage emailMessage = new SimpleMailMessage();
         emailMessage.setTo(email);
         emailMessage.setSubject("Lời mời tham gia hệ thống");
         emailMessage.setText(message);
         mailSender.send(emailMessage);
     }
+
 
     // Chấp nhận lời mời
     public String acceptInvitation(String token) {
@@ -98,7 +127,7 @@ public class InviteService {
     }
 
     // Tạo link mời với noteId hoặc taskId
-    public InviteLinkResponse generateInviteLink(Role role, Long noteId, Long taskId) {
+    public InviteLinkResponse generateInviteLink(Role role, Long noteId, Long taskId, Long userId) {
         if (noteId != null && taskId != null) {
             throw new IllegalArgumentException("Invite link can only be associated with either a note or a task, not both.");
         }
@@ -110,9 +139,15 @@ public class InviteService {
         LocalDateTime expiryDate = LocalDateTime.now().plusDays(7);
         inviteToken.setExpiryDate(expiryDate);
         inviteToken.setStatus(InviteStatus.PENDING);
-
         Long responseNoteId = null;
         Long responseTaskId = null;
+
+
+        if (userId != null) {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+            inviteToken.setUser(user);
+        }
 
         if (noteId != null) {
             Note note = noteRepository.findById(noteId)

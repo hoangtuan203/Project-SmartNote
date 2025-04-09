@@ -8,7 +8,6 @@ import { BsTrash2 } from "react-icons/bs";
 import { GoTasklist } from "react-icons/go";
 import { FaRegNoteSticky } from "react-icons/fa6";
 import { GrHomeRounded } from "react-icons/gr";
-import Logo from "../../assets/logo.png";
 import { fetchRecentNotes } from "@/service/RecentNoteService";
 import { RecentNote } from "@/service/RecentNoteService";
 import { IoMailUnreadOutline } from "react-icons/io5";
@@ -16,11 +15,10 @@ import { getListSharesByApprove, ShareResponse } from "@/service/ShareService";
 import { getNoteById } from "@/service/NoteService";
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isPrivateOpen, setIsPrivateOpen] = useState(true);
+  const [isPrivateOpen, setIsPrivateOpen] = useState(false);
   const [recentNotes, setRecentNotes] = useState<RecentNote[]>([]);
   const { darkMode, toggleDarkMode } = useTheme();
-  const [isShareOpen, setIsShareOpen] = useState(true);
-  const [sharedNotes, setSharedNotes] = useState<RecentNote[]>([]);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [shares, setShares] = useState<ShareResponse[]>([]);
   const navigate = useNavigate();
 
@@ -33,8 +31,20 @@ const Sidebar = () => {
   useEffect(() => {
     const loadRecentNotes = async () => {
       try {
-        const notes = await fetchRecentNotes(10); // Lấy 4 ghi chú gần nhất
-        console.log("Recent notes fetched:", notes);
+        const userId = localStorage.getItem("userId");
+
+        if (!userId) {
+          console.error("userId is null or undefined");
+          return; // Dừng lại nếu không có userId
+        }
+
+        const userIdConvertNumber = Number(userId);
+        if (isNaN(userIdConvertNumber)) {
+          console.error("userId is not a valid number:", userId);
+          return; // Dừng lại nếu không phải số
+        }
+
+        const notes = await fetchRecentNotes(10, userIdConvertNumber);
         setRecentNotes(notes);
       } catch (error) {
         console.error("Failed to fetch recent notes:", error);
@@ -46,9 +56,11 @@ const Sidebar = () => {
 
   //fetch list share
   useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    const userIdConvertNumber = Number(userId);
     const fetchShares = async () => {
       try {
-        const data = await getListSharesByApprove();
+        const data = await getListSharesByApprove(userIdConvertNumber);
         setShares(data);
       } catch (error) {
         console.error("Error fetching shares:", error);
@@ -71,9 +83,7 @@ const Sidebar = () => {
     try {
       localStorage.removeItem("recentNote");
       const note = await getNoteById(noteId);
-      console.log("Note data:", note.result);
       localStorage.setItem("recentNote", JSON.stringify(note.result));
-      const userId = localStorage.getItem("userId");
       navigate(`/note/${noteId}`, { state: note.result });
     } catch (error) {
       console.error("Lỗi khi lấy dữ liệu note:", error);
@@ -94,14 +104,19 @@ const Sidebar = () => {
     <div
       className={`h-screen p-4 flex flex-col transition-all duration-300 shadow-lg
       ${isCollapsed ? "w-20" : "w-64"}
-      ${darkMode ? "bg-gray-900 text-white" : "bg-gray-200 text-gray-900"}`}
+      ${darkMode ? "bg-gray-900 text-white" : "bg-gray-300 text-gray-900"}`}
     >
       {/* Header - Logo & Toggle Button */}
       <div className="flex items-center justify-between mb-4">
         {!isCollapsed && (
           <div className="flex items-center gap-2">
-            <img src={Logo} alt="Logo" className="w-12 h-auto transition-all" />
-            <span className="text-xl font-bold">Smart Note</span>
+            {/* <img
+              src={Logo}
+              alt="Logo"
+              className="w-20 h-auto transition-all" // Phóng to ảnh
+              style={{ background: "transparent" }} // Đảm bảo không có nền
+            /> */}
+            <span className="text-l font-bold">Smart Note</span>
           </div>
         )}
         <button
@@ -117,48 +132,47 @@ const Sidebar = () => {
         <ul className="space-y-3">
           {[
             {
+              id: 1,
               path: "/",
               label: "Home",
               icon: <GrHomeRounded className="text-xl" />,
             },
-
             {
+              id: 2,
               path: "/inbox",
               label: "Inbox",
               icon: <IoMailUnreadOutline className="text-xl" />,
             },
-
             {
+              id: 3,
               path: "/note",
               label: "Notes",
               icon: <FaRegNoteSticky className="text-xl" />,
             },
             {
+              id: 4,
               path: "/calendar",
               label: "Calendar",
               icon: <IoCalendarOutline className="text-xl" />,
             },
             {
+              id: 5,
               path: "/task",
               label: "Tasks",
               icon: <GoTasklist className="text-xl" />,
             },
-            {
-              path: "/trash",
-              label: "Trash",
-              icon: <BsTrash2 className="text-xl" />,
-            },
-          ].map(({ path, label, icon }) => (
-            <li key={path}>
+           
+          ].map(({ id, path, label, icon }) => (
+            <li key={id}>
               <NavLink
                 to={path}
                 className={({ isActive }) =>
                   `flex items-center gap-3 p-2 rounded-md transition-all 
-                  ${
-                    isActive
-                      ? "bg-gray-600 text-white"
-                      : "hover:bg-gray-300 dark:hover:bg-gray-700"
-                  }`
+          ${
+            isActive
+              ? "bg-gray-600 text-white"
+              : "hover:bg-gray-300 dark:hover:bg-gray-700"
+          }`
                 }
               >
                 {icon}
@@ -195,7 +209,7 @@ const Sidebar = () => {
               <ul className="space-y-2">
                 {recentNotes.length > 0 ? (
                   recentNotes.map((note) => (
-                    <li key={note.noteId}>
+                    <li key={note.id}>
                       <button
                         onClick={() => handClickNote(note.noteId)}
                         className="flex items-center gap-3 p-2 rounded-md transition-all hover:bg-gray-400 dark:hover:bg-gray-600 w-full text-left text-sm"

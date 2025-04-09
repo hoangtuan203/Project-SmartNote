@@ -16,8 +16,9 @@ import java.util.List;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
-    @Query("select t from Task t join User u on t.user.id = u.id")
-    Page<Task> findAllByPageable(Pageable pageable);
+    @Query("select t from Task t where t.user.id = :userId")
+    Page<Task> findAllByPageable(Pageable pageable, @Param("userId") Long userId);
+
 
     @Query("SELECT t FROM Task t WHERE t.dueDate BETWEEN :now AND :notifyThreshold AND t.isNotified = 0")
     List<Task> findByDueDateBetweenAndIsNotifiedFalse(@Param("now") LocalDateTime now,

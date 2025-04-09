@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Share2, Lock, Copy } from "lucide-react";
 import { sendInvitation, generateInviteLink } from "@/service/InviteService";
+import { toast } from "react-toastify"; // Import toast để hiển thị thông báo
+import "react-toastify/dist/ReactToastify.css"; // Import CSS của toastify
+import { ToastContainer } from "react-toastify";
 interface ShareHomeProps {
   shareId: { type: "note" | "task"; id: number } | null;
 }
@@ -40,13 +43,18 @@ const ShareHome: React.FC<ShareHomeProps> = ({ shareId }) => {
   }, [open]);
 
   const handleInvite = async () => {
+    if (!email) {
+      toast.error("Vui lòng nhập email hoặc nhóm để mời.");
+      return;
+    }
+
     try {
       console.log(selectedAccess);
       await sendInvitation(email, selectedAccess);
-      alert("Invitation sent successfully!");
+      toast.success("Invitation sent successfully!");
       setEmail("");
     } catch (error) {
-      alert("Failed to send invitation");
+      toast.error("Failed to send invitation");
     }
   };
 
@@ -93,6 +101,7 @@ const ShareHome: React.FC<ShareHomeProps> = ({ shareId }) => {
 
   return (
     <div className="relative" ref={dropdownRef}>
+      <ToastContainer position="top-right" autoClose={3000} />
       <button
         className="text-black px-4 py-2 rounded-md hover:bg-gray-200 transition-colors"
         onClick={() => setOpen(!open)}
@@ -134,12 +143,8 @@ const ShareHome: React.FC<ShareHomeProps> = ({ shareId }) => {
                 N
               </div>
               <div className="flex-1">
-                <span className="block font-semibold">
-                 {username}(You)
-                </span>
-                <span className="block text-gray-500 text-sm">
-                  {emailUser}
-                </span>
+                <span className="block font-semibold">{username}(You)</span>
+                <span className="block text-gray-500 text-sm">{emailUser}</span>
               </div>
               <select
                 className="text-gray-500 bg-white border rounded-md px-2 py-1"
@@ -153,7 +158,7 @@ const ShareHome: React.FC<ShareHomeProps> = ({ shareId }) => {
                 ))}
               </select>
             </div>
-            
+
             <div className="flex items-center gap-2 mt-4">
               <Lock className="w-5 h-5 text-gray-500" />
               <select

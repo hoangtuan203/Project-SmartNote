@@ -1,77 +1,24 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { functionsList } from "./SlashCommand";
-import { getNoteImages, NoteImage } from "@/service/NoteImageService";
-import { useLocation } from "react-router-dom";
-import { Note } from "@/service/NoteService";
+import {Note } from "@/service/NoteService";
 import EditableDiv from "./EditableDiv";
-const NoteContent = () => {
+const NoteContent = ({
+  noteId,
+}: {
+  noteId?: number | null;
+}) => {
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 
-  const location = useLocation();
-  const note: Note | null = location.state || null;
-  const noteId = note?.noteId ?? -1;
-
-  const [images, setImages] = useState<NoteImage[]>([]); // Lưu danh sách ảnh
-
-  useEffect(() => {
-    const loadImages = async () => {
-      if (noteId === -1) return; // Nếu noteId không hợp lệ, không tải ảnh
-
-      try {
-        const data = await getNoteImages(noteId); // Gọi API lấy ảnh
-        console.log("Loaded images:", data);
-
-        if (!Array.isArray(data)) {
-          throw new Error("Invalid API response format");
-        }
-
-        // Xử lý để chỉ lấy filename từ imageUrl
-        const processedImages: NoteImage[] = data.map((img) => ({
-          imageId: img.imageId,
-          noteId: img.noteId,
-          imageUrl: img.imageUrl.split("/").pop() || "", // Lấy filename từ đường dẫn
-        }));
-
-        console.log("Processed images:", processedImages);
-        setImages(processedImages);
-      } catch (error) {
-        console.error("Error loading images:", error);
-      }
-    };
-
-    loadImages();
-  }, [noteId]);
-
-  const handleKeyDown = (e: React.FormEvent<HTMLDivElement>) => {
-    const selection = window.getSelection();
-    if (!selection || !selection.rangeCount) return;
-
-    const range = selection.getRangeAt(0);
-    const node = range.startContainer;
-    let charBeforeCursor = "";
-
-    if (node.nodeType === Node.TEXT_NODE && node.textContent) {
-      charBeforeCursor = node.textContent[range.startOffset - 1] || "";
-    }
-
-    if (charBeforeCursor === "/") {
-      const rect = range.getBoundingClientRect();
-      setMenuPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-      });
-      setShowMenu(true);
-    } else {
-      setShowMenu(false);
-    }
-  };
+  const [noteData, setNoteData] = useState<Note | null>(null); // Lưu thông tin ghi chú
 
   return (
     <>
       <EditableDiv
-        images={images}
+       
         handleSlashCommand={() => console.log("Slash command triggered")}
+        content={noteData?.content || ""}
+        noteId={noteId}
       />
 
       {showMenu && (

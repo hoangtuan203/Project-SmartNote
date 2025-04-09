@@ -22,8 +22,7 @@ public class TaskResponse {
     LocalDateTime dueDate;
     String status;
     String priority;
-
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     LocalDateTime createAt;
-
+    String assignee;
 }

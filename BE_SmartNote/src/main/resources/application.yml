@@ -88,5 +88,13 @@ spring:
           auth: true
           starttls:
             enable: true
+
 jwt:
   signerKey: "1TjXchw5FloESb63Kc+DFhTARvpWL4jUGCwfGWxuG5SIf/1y/LgJxHnMqaF6A/ij"
+
+recaptcha:
+  site-key: ${CAPTCHA_SITE_KEY}
+  secret-key: ${CAPTCHA_SECRET_KEY}
+  verify-url: "https://www.google.com/recaptcha/api/siteverify"
+
+

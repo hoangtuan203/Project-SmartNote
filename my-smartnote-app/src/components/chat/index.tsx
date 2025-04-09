@@ -24,8 +24,11 @@ const ChatHome = () => {
   useEffect(() => {
     const fetchShares = async () => {
       try {
-        const data = await getListShares();
-        // Sắp xếp share theo thời gian giảm dần (mới nhất lên đầu tiên)
+        const userId = localStorage.getItem("userId");
+        const userIdConvertNumber = Number(userId);
+        
+        const data = await getListShares(userIdConvertNumber);
+
         data.sort((a, b) => new Date(b.requestTime).getTime() - new Date(a.requestTime).getTime());
         setShares(data);
       } catch (error) {
@@ -50,22 +53,23 @@ const ChatHome = () => {
   };
 
   return (
-    <div className="relative p-8 w-full min-h-screen flex justify-center items-start">
-      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-6">
+    <div className="relative w-full min-h-screen flex justify-center items-start">
+      {/* Full-screen container */}
+      <div className="w-full h-full bg-white rounded-none shadow-none p-0 m-0">
         {/* Header */}
-        <div className="flex items-center justify-between text-gray-900 mb-6 border-b pb-3">
-          <h2 className="text-3xl font-extrabold tracking-tight text-blue-600">
+        <div className="w-full flex items-center justify-between text-gray-900 mb-6 border-b pb-3 px-6">
+          <h2 className="text-3xl font-extrabold tracking-tight text-black">
             Inbox
           </h2>
-          <Inbox className="w-7 h-7 text-blue-500" />
+          <Inbox className="w-7 h-7 text-black" />
         </div>
-
-        {/* Scrollable List */}
-        <ScrollArea className="max-h-[600px] overflow-y-auto space-y-6 scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-100">
+  
+        {/* Scrollable List with increased spacing */}
+        <ScrollArea className="max-h-[calc(100vh-120px)] overflow-y-auto space-y-8 scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-blue-100 px-6">
           {shares.map((share) => (
             <Card
               key={share.shareId}
-              className="relative bg-white text-gray-900 shadow-md rounded-2xl border p-5 transition hover:shadow-lg"
+              className="relative m-1 bg-white text-gray-900 shadow-md rounded-2xl p-5 transition hover:shadow-lg"
             >
               <CardContent className="flex flex-col gap-4">
                 {/* Thông tin người gửi */}
@@ -75,7 +79,7 @@ const ChatHome = () => {
                     <p className="font-semibold text-gray-800">
                       {share.ghostName} requested access to
                     </p>
-                    <p className="text-lg font-bold text-blue-600">
+                    <p className="text-lg font-bold text-black-600">
                       {share.title}
                     </p>
                     {share.status === "PENDING" && (
@@ -87,16 +91,15 @@ const ChatHome = () => {
                   </div>
                   <MoreVertical className="w-6 h-6 text-gray-500 cursor-pointer hover:text-gray-800 transition" />
                 </div>
-
+  
                 {/* Chọn vai trò và nút duyệt */}
                 {share.status === "PENDING" ? (
                   <div className="w-fit min-w-[250px] max-w-[300px] mx-auto grid grid-cols-[0.7fr_auto] gap-2 items-center">
                     {/* Role Selection */}
                     <Select
                       value={roles[share.shareId] || share.permission} // Giá trị mặc định lấy từ DB
-                      onValueChange={
-                        (value) =>
-                          setRoles({ ...roles, [share.shareId]: value }) // Lưu role mới vào state
+                      onValueChange={(value) =>
+                        setRoles({ ...roles, [share.shareId]: value }) // Lưu role mới vào state
                       }
                     >
                       <SelectTrigger className="w-full border rounded-lg px-2 py-2 text-sm bg-gray-50 hover:bg-gray-100 transition">
@@ -110,7 +113,7 @@ const ChatHome = () => {
                         ))}
                       </SelectContent>
                     </Select>
-
+  
                     {/* Approve Button */}
                     <Button
                       className="px-3 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition"

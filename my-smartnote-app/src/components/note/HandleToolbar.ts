@@ -1,6 +1,9 @@
+import { deleteImage } from "@/service/NoteService";
+
 export const handleToolbar = (
   e: React.ClipboardEvent<HTMLDivElement>,
-  contentElement: HTMLDivElement
+  contentElement: HTMLDivElement,
+  imageId : number
 ) => {
   const clipboardItems = e.clipboardData.items;
   for (let i = 0; i < clipboardItems.length; i++) {
@@ -13,7 +16,7 @@ export const handleToolbar = (
         reader.onload = (event: ProgressEvent<FileReader>) => {
           if (event.target?.result && contentElement) {
             const imageUrl = event.target.result as string;
-            createImageWithToolbar(imageUrl, contentElement);
+            createImageWithToolbar(imageUrl, contentElement, imageId);
           }
         };
 
@@ -27,10 +30,13 @@ export const handleToolbar = (
 // Hàm này cũng cần nhận HTMLDivElement thay vì RefObject
 export const createImageWithToolbar = (
   imageUrl: string,
-  contentElement: HTMLDivElement
+  contentElement: HTMLDivElement,
+  imageId : number,
+  fileName : string = "pasted-image.png"
 ): HTMLDivElement => {
   const imgWrapper = document.createElement("div");
-  imgWrapper.className = "relative group flex items-start justify-left gap-2 mb-4 mt-4";
+  imgWrapper.className =
+    "relative group flex items-start justify-left gap-2 mb-4 mt-4";
   imgWrapper.setAttribute("contentEditable", "false");
 
   const imgContainer = document.createElement("div");
@@ -42,56 +48,47 @@ export const createImageWithToolbar = (
   img.className =
     "max-w-full max-h-full object-contain rounded-lg cursor-pointer transition-transform duration-200";
 
-  let scale = 1; // Default scale
-  let originalWidth = 0; // Store the original width of the image
-  let originalHeight = 0; // Store the original height of the image
+  let scale = 1;
+  let originalWidth = 0;
+  let originalHeight = 0;
 
-  // Wait for the image to load to get its original dimensions
   img.onload = () => {
     originalWidth = img.offsetWidth;
     originalHeight = img.offsetHeight;
     imgContainer.style.width = `${originalWidth}px`;
     imgContainer.style.height = `${originalHeight}px`;
-    img.style.width = `${originalWidth}px`; // Ensure the image starts with the correct dimensions
+    img.style.width = `${originalWidth}px`;
     img.style.height = `${originalHeight}px`;
   };
 
-  // Function to handle image resizing when dragging left or right
-  let currentWidth = originalWidth; // Giá trị ban đầu khi load ảnh
-  let currentHeight = originalHeight; // Giá trị ban đầu khi load ảnh
+  
+
 
   const resizeImage = (e: MouseEvent, direction: "left" | "right") => {
     e.preventDefault();
 
     const diffX = e.pageX - startX;
-    let scaleChange = diffX / 500; // Điều chỉnh độ nhạy của việc phóng to/thu nhỏ
+    let scaleChange = diffX / 500;
 
     if (direction === "left") {
-      scaleChange = -scaleChange; // Đảo chiều nếu kéo sang trái
+      scaleChange = -scaleChange;
     }
 
-    scale = Math.max(0.5, Math.min(scale + scaleChange, 2)); // Giới hạn tỉ lệ tối thiểu 0.5 và tối đa 2
+    scale = Math.max(0.5, Math.min(scale + scaleChange, 2));
 
-    // Tính toán chiều rộng và chiều cao mới
     const newWidth = originalWidth * scale;
     const newHeight = originalHeight * scale;
 
-    // Cập nhật chiều rộng và chiều cao của ảnh và container
     img.style.width = `${Math.min(newWidth, imgContainer.offsetWidth)}px`;
     img.style.height = `${Math.min(newHeight, imgContainer.offsetHeight)}px`;
 
-    imgContainer.style.width = `${newWidth}px`; // Cập nhật chiều rộng của container
-    imgContainer.style.height = `${newHeight}px`; // Cập nhật chiều cao của container
+    imgContainer.style.width = `${newWidth}px`;
+    imgContainer.style.height = `${newHeight}px`;
 
-    // Cập nhật kích thước của các handle resize
     leftHandle.style.height = `${newHeight}px`;
     rightHandle.style.height = `${newHeight}px`;
 
-    // Lưu kích thước hiện tại sau khi thay đổi
-    currentWidth = img.offsetWidth;
-    currentHeight = img.offsetHeight;
-    console.log("Current Image Width:", currentWidth);
-    console.log("Current Image Height:", currentHeight);
+
     startX = e.pageX;
   };
 
@@ -99,8 +96,7 @@ export const createImageWithToolbar = (
   let startX = 0;
 
   const startResizing = (e: MouseEvent, direction: "left" | "right") => {
-    // Only allow resizing if the event is triggered by a mouse click (not touch or other events)
-    if (e.button !== 0) return; // Ensure it's a left mouse click
+    if (e.button !== 0) return;
     isResizing = true;
     startX = e.pageX;
     document.addEventListener("mousemove", (event: MouseEvent) => {
@@ -126,12 +122,11 @@ export const createImageWithToolbar = (
     document.removeEventListener("mouseup", stopResizing);
   };
 
-  // Add resize handles on both sides of the image
   const leftHandle = document.createElement("div");
   leftHandle.className =
     "absolute left-0 top-0 h-full w-2 bg-black opacity-0 group-hover:opacity-60 transition-opacity duration-200 cursor-ew-resize";
   leftHandle.addEventListener("mousedown", (e) => startResizing(e, "left"));
-  
+
   const rightHandle = document.createElement("div");
   rightHandle.className =
     "absolute right-0 top-0 h-full w-2 bg-black opacity-0 group-hover:opacity-60 transition-opacity duration-200 cursor-ew-resize";
@@ -150,25 +145,34 @@ export const createImageWithToolbar = (
     toolbar.style.opacity = "0";
   });
 
+
+
+  // Delete button
   const deleteBtn = document.createElement("button");
+  console.log("image Id delete : ", imageId)
   deleteBtn.className =
     "bg-gray-200 text-gray-600 rounded p-1 text-sm hover:bg-red-500 hover:text-white transition-all duration-200";
   deleteBtn.innerText = "X";
-  deleteBtn.addEventListener("click", () => {
-    imgWrapper.remove();
+  
+  deleteBtn.addEventListener("click", (e) => {
+    e.stopPropagation(); // Ngăn click lan ra ngoài
+    deleteImage(imageId); // Gọi hàm xoá trong backend hoặc state
+    imgWrapper.remove(); // Xoá ảnh ngay trên giao diện
   });
+  
 
+  // Download button
   const downloadBtn = document.createElement("button");
   downloadBtn.className =
     "bg-gray-200 text-gray-600 rounded p-1 text-sm hover:bg-blue-500 hover:text-white transition-all duration-200";
   downloadBtn.innerText = "⬇️";
-  downloadBtn.addEventListener("click", () => {
+  downloadBtn.addEventListener("click", (e) => {
+    e.stopPropagation(); // Ngăn mở ảnh
     const link = document.createElement("a");
     link.href = imageUrl;
-    link.download = "pasted-image.png";
+    link.download = fileName;
     link.click();
   });
-
   const expandBtn = document.createElement("button");
   expandBtn.className =
     "bg-gray-200 text-gray-600 rounded p-1 text-sm hover:bg-green-500 hover:text-white transition-all duration-200";

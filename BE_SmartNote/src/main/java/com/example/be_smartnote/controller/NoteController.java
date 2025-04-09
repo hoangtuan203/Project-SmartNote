@@ -12,6 +12,7 @@ import com.example.be_smartnote.service.NoteService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,8 +21,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-
+@Slf4j
 @RestController
 @RequestMapping("/api/note")
 public class NoteController {
@@ -31,10 +33,10 @@ public class NoteController {
     @Autowired
     private ObjectMapper objectMapper;
     @GetMapping
-    public ApiResponse<NoteResponseWrapper> getAllNotesByPageable(@RequestParam(defaultValue = "1") int page, @RequestParam int size) {
+    public ApiResponse<NoteResponseWrapper> getAllNotesByPageable(@RequestParam(defaultValue = "1") int page, @RequestParam int size, @RequestParam Long userId) {
         Pageable pageable = PageRequest.of(page - 1, size);
         return ApiResponse.<NoteResponseWrapper>builder()
-                .result(noteService.getListNotesByPageable(pageable))
+                .result(noteService.getListNotesByPageable(pageable, userId))
                 .build();
     }
 
@@ -69,16 +71,29 @@ public class NoteController {
     public ApiResponse<NoteResponse> updateNote(
             @PathVariable Long noteId,
             @RequestParam("note") String noteJson,
-            @RequestPart("images") List<MultipartFile> images) throws JsonProcessingException {
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
 
+        // Nếu images là null, gán nó thành danh sách rỗng
+        if (images == null) {
+            images = new ArrayList<>();
+        }
+
+        // Chuyển đổi từ noteJson sang NoteRequest
+        NoteRequest noteRequest = convertToNoteRequest(noteJson);
+        log.info("note request : {}", noteRequest.getImageUrls());
+        // Cập nhật ghi chú và xử lý hình ảnh
+        var result = noteService.updateNote(noteId, noteRequest, images);
+
+        return new ApiResponse<>(1000, "Update note success", result);
+    }
+
+
+    private NoteRequest convertToNoteRequest(String noteJson) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule()); // Hỗ trợ Java 8 Date/Time API
-        NoteRequest noteRequest = objectMapper.readValue(noteJson, NoteRequest.class);
-
-
-        var result = noteService.updateNote(noteId, noteRequest, images);
-        return new ApiResponse<>(1000, "update note success", result);
+        return objectMapper.readValue(noteJson, NoteRequest.class);
     }
+
 
     //note image get images
 
@@ -92,9 +107,9 @@ public class NoteController {
                 .build();
     }
 
-    @DeleteMapping("/deleteImage/{imageId}")
-    public ApiResponse<Boolean> deleteImage(@PathVariable Long imageId) {
-        var result = noteService.deleteImageWithNote(imageId);
+    @DeleteMapping("/deleteImage/{id}")
+    public ApiResponse<Boolean> deleteImage(@PathVariable Long id) {
+        var result = noteService.deleteImageWithNote(id);
         return ApiResponse.<Boolean>builder()
                 .code(1000)
                 .message("delete success")

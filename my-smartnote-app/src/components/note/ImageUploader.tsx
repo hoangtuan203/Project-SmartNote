@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, useState } from "react";
-import { handleToolbar, createImageWithToolbar } from "./HandleToolbar";
 import { getImageUrl } from "@/service/NoteService";
 
 export interface NoteImage {
@@ -33,31 +32,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ images }) => {
     }
   }, [images]);
 
-  useEffect(() => {
-    const handlePaste = (e: ClipboardEvent) => {
-      if (contentRef.current) {
-        handleToolbar(
-          e as unknown as React.ClipboardEvent<HTMLDivElement>,
-          contentRef.current
-        );
-      }
-    };
-
-    document.addEventListener("paste", handlePaste as EventListener);
-    return () => {
-      document.removeEventListener("paste", handlePaste as EventListener);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (contentRef.current && imageUrls.length > 0) {
-      imageUrls.forEach((url) => {
-        if (contentRef.current) {
-          createImageWithToolbar(url, contentRef.current);
-        }
-      });
-    }
-  }, [imageUrls]);
+ 
 
   return (
     <div

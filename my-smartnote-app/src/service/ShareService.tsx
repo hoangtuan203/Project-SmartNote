@@ -23,10 +23,10 @@ interface ShareResponseData {
     result?: ShareResponse[];
 }
 
-export const getListShares = async (): Promise<ShareResponse[]> => {
+export const getListShares = async (userId: number): Promise<ShareResponse[]> => {
     try {
-        const response = await httpRequest.get<ShareResponseData>("/share");
-        console.log(response)
+        // Truyền userId dưới dạng query parameter
+        const response = await httpRequest.get<ShareResponseData>(`/share?userId=${userId}`);
         return response.data?.result || [];
     } catch (error) {
         console.error("Error fetching share list:", error);
@@ -37,10 +37,9 @@ export const getListShares = async (): Promise<ShareResponse[]> => {
     }
 };
 
-export const getListSharesByApprove = async (): Promise<ShareResponse[]> => {
+export const getListSharesByApprove = async (userId: number): Promise<ShareResponse[]> => {
     try {
-        const response = await httpRequest.get<ShareResponseData>("/share/getListShareApprove");
-        console.log(response)
+        const response = await httpRequest.get<ShareResponseData>(`/share/getListShareApprove?userId=${userId}`);
         return response.data?.result || [];
     } catch (error) {
         console.error("Error fetching share list:", error);

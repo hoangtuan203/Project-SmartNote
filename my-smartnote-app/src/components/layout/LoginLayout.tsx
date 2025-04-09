@@ -1,4 +1,4 @@
-import LoginPage from "@/pages/Login/Login";
+import LoginPage from "@/pages/Authentication/Login";
 
 function LoginLayout() {
     return (

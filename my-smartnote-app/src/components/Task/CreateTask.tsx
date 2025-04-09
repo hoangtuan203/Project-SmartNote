@@ -18,7 +18,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { createTask } from "@/service/TaskService";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; 
+import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 const priorityLevels = ["Cao", "Trung bình", "Thấp"];
 const statusLevels = ["Đang hoàn thành", "Đã hoàn thành", "Đang thực hiện"];
@@ -31,6 +31,7 @@ export default function CreateTask() {
     dueDate: null as DateValue | null,
     priority: "Thấp",
     status: "Đang hoàn thành",
+    assignee: "",
   });
 
   const [priorityQuery, setPriorityQuery] = useState("");
@@ -46,18 +47,16 @@ export default function CreateTask() {
 
   //create task
   const handleAddTask = useCallback(async () => {
-    
-
     if (!newTask.title.trim()) {
       toast.error("Vui lòng nhập tiêu đề công việc");
       return;
     }
-  
+
     if (!newTask.description.trim()) {
       toast.error("Vui lòng nhập mô tả công việc");
       return;
     }
-  
+
     if (!date) {
       toast.error("Vui lòng chọn ngày hết hạn");
       return;
@@ -71,9 +70,10 @@ export default function CreateTask() {
         userId: userId,
         title: newTask.title,
         description: newTask.description,
-        dueDate: formattedDueDate,  
+        dueDate: formattedDueDate,
         priority: newTask.priority,
         status: newTask.status,
+        assignee: newTask.description,
       });
       toast.success("Task created successfully");
       console.log(createdTask);
@@ -84,8 +84,8 @@ export default function CreateTask() {
           dueDate: null,
           priority: "Thấp",
           status: "Đang hoàn thành",
+          assignee: ""
         });
-        
       } else {
         throw new Error("Task creation failed");
       }
@@ -95,7 +95,6 @@ export default function CreateTask() {
   }, [newTask, date]);
 
   return (
-    
     <div className="flex items-center justify-center ">
       <ToastContainer position="top-right" autoClose={3000} />
       <div className="w-full max-w-lg bg-white shadow-2xl rounded-2xl p-6 transition-transform transform">
@@ -234,6 +233,21 @@ export default function CreateTask() {
                 </Combobox.Options>
               </div>
             </Combobox>
+          </div>
+
+          {/** Input for Assignee (Người thực hiện) */}
+          <div className="relative w-full">
+            <label className="block text-sm font-medium text-gray-700">
+              Người thực hiện
+            </label>
+            <Input
+              placeholder="Nhập tên người thực hiện..."
+              value={newTask.assignee}
+              onChange={(e) =>
+                setNewTask({ ...newTask, assignee: e.target.value })
+              }
+              className="w-full border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+            />
           </div>
 
           <Button

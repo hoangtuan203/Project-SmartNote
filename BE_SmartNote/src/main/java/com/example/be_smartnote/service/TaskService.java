@@ -25,6 +25,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
+
 @Slf4j
 @Service
 @Transactional
@@ -33,8 +34,9 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
+
     public TaskService(TaskRepository taskRepository, TaskMapper taskMapper, NotificationService notificationService,
-                       UserRepository userRepository){
+                       UserRepository userRepository) {
         this.taskRepository = taskRepository;
         this.taskMapper = taskMapper;
         this.notificationService = notificationService;
@@ -42,8 +44,8 @@ public class TaskService {
     }
 
     //get all and pagination
-    public TaskResponseWrapper getAllTask(Pageable pageable) {
-        Page<Task> tasks = taskRepository.findAllByPageable(pageable);
+    public TaskResponseWrapper getAllTaskPageable(Pageable pageable, Long userId) {
+        Page<Task> tasks = taskRepository.findAllByPageable(pageable, userId);
         Page<TaskResponse> taskResponses = tasks.map(taskMapper::toTaskResponse);
         return new TaskResponseWrapper(
                 taskResponses.getTotalPages(),
@@ -51,6 +53,21 @@ public class TaskService {
                 taskResponses.getContent()
         );
     }
+
+    public TaskResponseWrapper getAllTask() {
+        List<Task> tasks = taskRepository.findAll();
+
+        List<TaskResponse> taskResponses = tasks.stream()
+                .map(taskMapper::toTaskResponse)
+                .toList();
+
+        return new TaskResponseWrapper(
+                1,
+                taskResponses.size(),
+                taskResponses
+        );
+    }
+
 
     // Chạy mỗi 1 giờ để kiểm tra task sắp hết hạn
     @Scheduled(fixedRate = 3600000) // 1 giờ
@@ -66,6 +83,7 @@ public class TaskService {
 
 
     @Transactional
+    @Scheduled(cron = "0 */5 * * * *")
     public List<Task> checkTasksForNotification() {
         ZoneId vietnamZone = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -85,15 +103,13 @@ public class TaskService {
     }
 
 
-
     private void sendNotification(Task task) {
-       notificationService.sendTaskNotification(task);
+        notificationService.sendTaskNotification(task);
     }
 
     //create task
-    public TaskResponse createTask(TaskRequest request){
+    public TaskResponse createTask(TaskRequest request) {
 
-        log.info("User id : {}", request.getUserId());
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
@@ -117,7 +133,7 @@ public class TaskService {
 
     //update task
 
-    public TaskResponse updateTask(Long taskId, TaskRequest taskRequest){
+    public TaskResponse updateTask(Long taskId, TaskRequest taskRequest) {
         Task task = taskRepository.findById(taskId).orElseThrow(() -> new AppException(ErrorCode.TASK_NOT_EXITS));
 
         User user = userRepository.findById(taskRequest.getUserId()).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -135,5 +151,13 @@ public class TaskService {
 
         return taskMapper.toTaskResponse(task);
     }
+
+    //delete task by id
+    public boolean deleteTask(Long id) {
+        var taskDelete = taskRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.TASK_NOT_EXITS));
+        taskRepository.deleteById(id);
+        return true;
+    }
+
 
 }

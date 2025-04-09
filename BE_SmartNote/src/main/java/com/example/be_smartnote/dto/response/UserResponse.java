@@ -16,5 +16,4 @@ public class UserResponse {
     String password;
     String avatarUrl;
     String provider;
-    Instant createdAt;
 }

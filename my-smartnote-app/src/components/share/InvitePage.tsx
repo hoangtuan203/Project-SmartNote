@@ -43,7 +43,7 @@ export default function InvitePage() {
       return;
     }
 
-    // Xử lý logic khi đã đăng nhập và có token
+ 
     if (token) {
       checkInvite(token)
         .then((response) => {

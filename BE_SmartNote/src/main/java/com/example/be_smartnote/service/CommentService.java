@@ -14,9 +14,12 @@ import com.example.be_smartnote.repository.NoteRepository;
 import com.example.be_smartnote.repository.TaskRepository;
 import com.example.be_smartnote.repository.UserRepository;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,15 +29,17 @@ public class CommentService {
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final CommentMapper commentMapper;
-    public CommentService(CommentRepository commentRepository, CommentMapper commentMapper, UserRepository userRepository, NoteRepository noteRepository){
+
+    public CommentService(CommentRepository commentRepository, CommentMapper commentMapper, UserRepository userRepository, NoteRepository noteRepository) {
         this.commentRepository = commentRepository;
         this.commentMapper = commentMapper;
         this.noteRepository = noteRepository;
         this.userRepository = userRepository;
     }
 
-    public List<CommentResponse> getListCommentByLimit(int quantity) {
-        List<Comment> comments = commentRepository.getListCommentByLimit(PageRequest.of(0, quantity));
+    public List<CommentResponse> getListCommentByLimit(int quantity, Long userId) {
+        Pageable pageable = PageRequest.of(0, quantity, Sort.by(Sort.Direction.DESC, "createdAt"));
+        List<Comment> comments = commentRepository.getListCommentByLimit(userId, pageable);
 
         return comments.stream()
                 .map(commentMapper::toCommentResponse)
@@ -60,11 +65,22 @@ public class CommentService {
     }
 
     //delete comment
-    public boolean deleteComment(Long id){
+    public boolean deleteComment(Long id) {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.COMMENT_NOT_EXITS));
         commentRepository.deleteById(id);
         return true;
+    }
+
+    public CommentResponse updateComment(CommentRequest request, Long commentId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        comment.setContent(request.getContent());
+        comment.setCreatedAt(Instant.now()); // nếu bạn có field updatedAt
+        commentRepository.save(comment);
+
+        return commentMapper.toCommentResponse(comment);
     }
 
 }

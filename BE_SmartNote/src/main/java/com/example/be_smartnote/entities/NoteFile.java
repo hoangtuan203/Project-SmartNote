@@ -14,12 +14,13 @@ import java.time.Instant;
 @Table(name = "files")
 public class NoteFile {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "note_id", nullable = false)
+    @JoinColumn(name = "note_id", nullable = true)  // Chỉnh sửa ở đây để cho phép noteId null
     private Note note;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -37,5 +38,11 @@ public class NoteFile {
     @Column(name = "uploaded_at", nullable = false)
     private Instant uploadedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "file_type", nullable = false)
+    private FileType fileType;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comment_id", nullable = true)
+    private Comment comment;
 }

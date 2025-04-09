@@ -8,6 +8,7 @@ import { IoArrowBack, IoArrowForward } from "react-icons/io5";
 import {
   Notification as NotificationType,
   ListNotification,
+  deleteNotification,
 } from "@/service/NotificationService";
 import ShareHome from "@/components/share/index";
 
@@ -25,9 +26,9 @@ const Header = () => {
 
   interface ShareId {
     type: "note" | "task"; // Loại nội dung
-    id: number;           // ID của nội dung
+    id: number; // ID của nội dung
   }
-  
+
   const [shareId, setShareId] = useState<ShareId | null>(null);
   // State lưu thông tin user
   const [user] = useState({
@@ -45,10 +46,11 @@ const Header = () => {
 
     // Kiểm tra nếu đang xem chi tiết note/task
     if (location.pathname.startsWith("/note/")) {
+      // const title = location.state.note.title
       const idFromPath = location.pathname.split("/")[2];
       const numericId = parseInt(idFromPath, 10);
       if (!isNaN(numericId)) {
-        setCurrentTitle(`Note : ${idFromPath}`);
+        setCurrentTitle(`Private / ${idFromPath}`);
         setShareId({ type: "note", id: numericId }); // Lưu type là "note"
       } else {
         setCurrentTitle("ID ghi chú không hợp lệ");
@@ -105,20 +107,28 @@ const Header = () => {
       time: "Past Week",
     },
   ];
-
+  const fetchNotifications = async () => {
+    try {
+      const userId = localStorage.getItem("userId");
+      const userIdNumber = Number(userId); // Chuyển đổi userId sang số
+      const notifications = await ListNotification(1, 5, userIdNumber); // Lấy 5 thông báo mới nhất
+      setNotification(notifications);
+    } catch (error) {
+      console.error("Failed to fetch notifications", error);
+    }
+  };
   useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const notifications = await ListNotification(1, 5); // Lấy 5 thông báo mới nhất
-        console.log("Fetched notifications:", notifications);
-        setNotification(notifications);
-      } catch (error) {
-        console.error("Failed to fetch notifications", error);
-      }
-    };
-
     fetchNotifications();
   }, []);
+
+  const handleDeleteNotification = async (id: number) => {
+    try {
+      await deleteNotification(id); // Xoá thông báo
+      fetchNotifications(); // Sau khi xoá, gọi lại hàm để tải lại thông báo
+    } catch (error) {
+      console.error("Failed to delete notification", error);
+    }
+  };
 
   return (
     <>
@@ -161,8 +171,10 @@ const Header = () => {
           <ShareHome shareId={shareId} />
 
           {/* Thông báo */}
-          <Notification notifications={notification} />
-
+          <Notification
+            notifications={notification}
+            onDelete={handleDeleteNotification} // Gửi hàm xoá thông báo vào component Notification
+          />
           {user.email !== "Guest" ? (
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">{user.email}</span>

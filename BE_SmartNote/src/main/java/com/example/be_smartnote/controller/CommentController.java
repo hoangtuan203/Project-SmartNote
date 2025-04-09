@@ -15,8 +15,9 @@ public class CommentController {
 
     @Autowired
     private CommentService commentService;
+
     @PostMapping("/save")
-    public ApiResponse<CommentResponse> saveComment(@RequestBody CommentRequest request){
+    public ApiResponse<CommentResponse> saveComment(@RequestBody CommentRequest request) {
         var result = commentService.saveComment(request);
         return ApiResponse.<CommentResponse>builder()
                 .message("save comment successful")
@@ -26,8 +27,8 @@ public class CommentController {
     }
 
     @GetMapping("/list")
-    public ApiResponse<List<CommentResponse>> getListCommentByLimit(@RequestParam int quantity) {
-        var result = commentService.getListCommentByLimit(quantity);
+    public ApiResponse<List<CommentResponse>> getListCommentByLimit(@RequestParam int quantity, Long userId) {
+        var result = commentService.getListCommentByLimit(quantity, userId);
         return ApiResponse.<List<CommentResponse>>builder()
                 .message("Get list of comments successful")
                 .code(1000)
@@ -36,7 +37,7 @@ public class CommentController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ApiResponse<Boolean> deleteComment(@PathVariable Long id){
+    public ApiResponse<Boolean> deleteComment(@PathVariable Long id) {
         boolean result = commentService.deleteComment(id);
         return ApiResponse.<Boolean>builder()
                 .message("delete comment successful")
@@ -45,4 +46,16 @@ public class CommentController {
                 .build();
 
     }
+
+    @PutMapping("/update")
+    public ApiResponse<CommentResponse> updateComment(@RequestBody CommentRequest request,
+                                                      @RequestParam Long commentId) {
+        var result = commentService.updateComment(request, commentId);
+        return ApiResponse.<CommentResponse>builder()
+                .message("Update comment successful")
+                .code(1000)
+                .result(result)
+                .build();
+    }
+
 }

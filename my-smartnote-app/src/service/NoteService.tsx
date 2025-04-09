@@ -1,23 +1,24 @@
 import httpRequest from "@/utils/httpRequest";
 export interface Note {
   createdAt: string | number | Date;
+  updatedAt: string | number | Date;
   noteId: number;
   userId: number;
   title: string;
   content: string;
   is_pinned: boolean | null;
   color: string;
-  imageUrls: string[]; // Thêm danh sách URL ảnh
+  imageUrls?: string[];
+  filesUrls?: string[];
 }
-
 
 export interface NoteRequest {
   userId: number;
   title: string;
   content: string;
   color: string;
-  createdAt?: string;
   updatedAt?: string;
+  imageUrls: string[]; // Thêm danh sách URL ảnh
 }
 
 export interface NoteResponse {
@@ -29,7 +30,6 @@ export interface NoteResponse {
     notes: Note[]; // Đã bao gồm `imageUrls`
   };
 }
-
 
 export interface ApiResponse<T> {
   code?: number;
@@ -64,11 +64,12 @@ export const getAllNotes = async (): Promise<Note[]> => {
 
 export const fetchNotes = async (
   page: number = 1,
-  size: number = 5
+  size: number = 5,
+  userId: number
 ): Promise<NoteResponse["result"] | undefined> => {
   try {
     const response = await httpRequest.get<NoteResponse>("/note", {
-      params: { page, size },
+      params: { page, size, userId },
     });
 
     console.log("API response (fetchNotes):", response.data);
@@ -79,19 +80,27 @@ export const fetchNotes = async (
     throw new Error("Failed to fetch notes");
   }
 };
-
 export const saveNote = async (
   noteData: NoteRequest,
   images?: File[]
 ): Promise<Note> => {
   try {
     const formData = new FormData();
-    formData.append("note", JSON.stringify(noteData));
 
-    if (images) {
-      images.forEach((image) => formData.append("images", image));
+    // Thêm noteData và imageUrls vào formData
+    if (noteData) {
+      formData.append("note", JSON.stringify(noteData)); // note chính
+      formData.append("images", JSON.stringify(noteData.imageUrls)); // imageUrls dạng JSON nếu có
     }
 
+    // Nếu có file ảnh thật, thêm từng cái vào
+    if (images && images.length > 0) {
+      images.forEach((image) => {
+        formData.append("images", image); // thêm file ảnh thực tế
+      });
+    }
+
+    // Gửi request POST
     const response = await httpRequest.post<NoteResponseCreate>(
       "/note/save",
       formData,
@@ -119,13 +128,23 @@ export const updateNote = async (
   images?: File[]
 ): Promise<Note> => {
   try {
+    console.log("Note data to update:", noteData);
     const formData = new FormData();
-    formData.append("note", JSON.stringify(noteData));
 
-    if (images) {
-      images.forEach((image) => formData.append("images", image));
+    // Thêm noteData vào formData
+    if (noteData) {
+      formData.append("note", JSON.stringify(noteData)); // Gửi noteData dưới dạng JSON
+      formData.append("images", JSON.stringify(noteData.imageUrls));
     }
 
+    // Nếu có ảnh thực tế cần gửi, thêm vào formData
+    if (images && images.length > 0) {
+      images.forEach((image) => {
+        formData.append("images", image); // Gửi từng file ảnh
+      });
+    }
+
+    // Thực hiện request PUT với FormData
     const response = await httpRequest.put<NoteResponseCreate>(
       `/note/update/${noteId}`,
       formData,
@@ -136,8 +155,9 @@ export const updateNote = async (
 
     console.log("API response (updateNote):", response.data);
 
+    // Kiểm tra và trả về kết quả
     if (response.data?.result) {
-      return response.data.result;
+      return response.data.result; // Trả về note đã cập nhật
     } else {
       throw new Error("API response does not contain a valid note");
     }
@@ -166,6 +186,19 @@ export const getNoteById = async (id: number): Promise<ApiResponse<Note>> => {
     return response.data;
   } catch (error) {
     console.error("Error fetching note:", error);
+    throw error;
+  }
+};
+
+export const deleteImage = async (
+  imageId: number
+): Promise<ApiResponse<boolean>> => {
+  try {
+    const response = await httpRequest.delete(`/note/deleteImage/${imageId}`);
+
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting image:", error);
     throw error;
   }
 };

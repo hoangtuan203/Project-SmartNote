@@ -1,14 +1,14 @@
 package com.example.be_smartnote.service;
 
 import com.example.be_smartnote.dto.request.AuthenticationRequest;
+import com.example.be_smartnote.dto.request.RefreshRequest;
 import com.example.be_smartnote.dto.response.AuthenticationResponse;
 import com.example.be_smartnote.dto.response.InviteLinkResponse;
-import com.example.be_smartnote.entities.InviteStatus;
-import com.example.be_smartnote.entities.InviteToken;
-import com.example.be_smartnote.entities.Role;
-import com.example.be_smartnote.entities.User;
+import com.example.be_smartnote.dto.response.RefreshResponse;
+import com.example.be_smartnote.entities.*;
 import com.example.be_smartnote.exception.AppException;
 import com.example.be_smartnote.exception.ErrorCode;
+import com.example.be_smartnote.repository.InvalidatedTokenRepository;
 import com.example.be_smartnote.repository.InviteTokenRepository;
 import com.example.be_smartnote.repository.UserRepository;
 import com.nimbusds.jose.*;
@@ -16,7 +16,6 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import jakarta.transaction.Transactional;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +38,7 @@ import java.util.*;
 @Slf4j
 @Service
 public class AuthenticationService {
+    private final InvalidatedTokenRepository invalidatedTokenRepository;
     private final InviteTokenRepository inviteTokenRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -46,11 +46,13 @@ public class AuthenticationService {
     private final InviteService inviteService;
 
     public AuthenticationService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                                 InviteTokenRepository inviteTokenRepository, InviteService inviteService) {
+                                 InviteTokenRepository inviteTokenRepository, InviteService inviteService,
+                                 InvalidatedTokenRepository invalidatedTokenRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.inviteTokenRepository = inviteTokenRepository;
         this.inviteService = inviteService;
+        this.invalidatedTokenRepository = invalidatedTokenRepository;
     }
 
     @Value("${jwt.signerKey}")
@@ -130,6 +132,8 @@ public class AuthenticationService {
             Map<String, Object> tokenDetail = new HashMap<>();
             tokenDetail.put("user_id", claimsSet.getClaim("user_id"));
             tokenDetail.put("username", claimsSet.getClaim("username"));
+            tokenDetail.put("email", claimsSet.getClaim("email"));
+            tokenDetail.put("role", claimsSet.getClaim("role"));
             tokenDetail.put("expiration_time", claimsSet.getExpirationTime());
             tokenDetail.put("issue_time", claimsSet.getIssueTime());
 
@@ -155,7 +159,24 @@ public class AuthenticationService {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
         return signedJWT;
+    }
 
+
+    //refresh Token
+    public RefreshResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException {
+        var signedJWT = verifyToken(request.getToken(), true);
+        var jit = signedJWT.getJWTClaimsSet().getJWTID();
+        var expireTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        InvalidatedToken invalidatedToken =
+                InvalidatedToken.builder().id(jit).expiryTime(expireTime).build();
+
+        invalidatedTokenRepository.save(invalidatedToken);
+        var email = signedJWT.getJWTClaimsSet().getStringClaim("email");
+        var user = userRepository.findByEmail(email).orElseThrow(
+                ()-> new AppException(ErrorCode.USER_NOT_EXISTED)
+        );
+        var token = generateToken(user);
+        return RefreshResponse.builder().token(token.token()).authenticated(true).build();
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
@@ -165,7 +186,7 @@ public class AuthenticationService {
 
         //ma hoa password
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
-
+        
         var userId = user.getId();
         var fullName = user.getFullName();
         var email = user.getEmail();
@@ -228,8 +249,12 @@ public class AuthenticationService {
 
             InviteToken inviteToken = inviteTokenRepository.findLatestInviteToken();
             inviteToken.setEmail(email);
+            inviteToken.setUser(user); // Lưu userId vào InviteToken
 
             inviteTokenRepository.save(inviteToken);
+
+            Long userId = user.getId(); // Lấy userId của người dùng mới
+            InviteLinkResponse inviteLinkResponse = inviteService.generateInviteLink(user.getRole(), null, null, userId); // Gửi userId vào generateInviteLink
 
             AuthenticationService.TokenInfo tokenInfo = generateToken(user);
             return ResponseEntity.ok(Map.of(
@@ -243,7 +268,6 @@ public class AuthenticationService {
             ));
         }
 
-        // Nếu không có người dùng, tạo mới
         User newUser = new User();
         newUser.setFullName(name);
         newUser.setPassword("oauth2_default_password_" + provider);
@@ -253,11 +277,16 @@ public class AuthenticationService {
         newUser.setRole(Role.FULL_ACCESS);
         User savedUser = userRepository.save(newUser);
 
+        // Lấy và cập nhật InviteToken
         InviteToken inviteToken = inviteTokenRepository.findLatestInviteToken();
         inviteToken.setEmail(email);
+        inviteToken.setUser(savedUser); // Lưu userId vào InviteToken
+
+        Long userId = savedUser.getId(); // Lấy userId của người dùng mới
+        InviteLinkResponse inviteLinkResponse = inviteService.generateInviteLink(savedUser.getRole(), null, null, userId); // Gửi userId vào generateInviteLink
+
 
         inviteTokenRepository.save(inviteToken);
-
         AuthenticationService.TokenInfo tokenInfo = generateToken(savedUser);
 
         return ResponseEntity.ok(Map.of(
@@ -341,4 +370,6 @@ public class AuthenticationService {
 
         return response.getBody();
     }
+
+
 }

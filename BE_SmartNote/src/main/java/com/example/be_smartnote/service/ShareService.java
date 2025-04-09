@@ -21,14 +21,14 @@ public class ShareService {
         this.shareMapper = shareMapper;
     }
 
-    public List<ShareResponse> getAllShares() {
-        List<Share> shares = shareRepository.findAll();
+    public List<ShareResponse> getAllShares(Long userId) {
+        List<Share> shares = shareRepository.findAllShareByUserId(userId);
         return shares.stream()
                 .map(shareMapper::toShareResponse)
                 .collect(Collectors.toList());
     }
-    public List<ShareResponse> getShareWithApprove() {
-        List<Share> shares = shareRepository.getShareByApprove();
+    public List<ShareResponse> getShareWithApprove(Long userId) {
+        List<Share> shares = shareRepository.getShareByApprove(userId);
         return shares.stream()
                 .map(shareMapper::toShareResponse)
                 .collect(Collectors.toList());

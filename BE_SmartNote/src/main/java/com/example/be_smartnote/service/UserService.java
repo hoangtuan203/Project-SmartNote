@@ -1,11 +1,8 @@
 package com.example.be_smartnote.service;
 
-import com.example.be_smartnote.dto.request.UserRequest;
-import com.example.be_smartnote.dto.response.TaskResponse;
-import com.example.be_smartnote.dto.response.TaskResponseWrapper;
+import com.example.be_smartnote.dto.request.UserCreateRequest;
 import com.example.be_smartnote.dto.response.UserResponse;
 import com.example.be_smartnote.dto.response.UserResponseWrapper;
-import com.example.be_smartnote.entities.Task;
 import com.example.be_smartnote.entities.User;
 import com.example.be_smartnote.exception.AppException;
 import com.example.be_smartnote.exception.ErrorCode;
@@ -38,21 +35,6 @@ public class UserService {
         );
     }
 
-    public UserResponse createUser(UserRequest request) {
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new AppException(ErrorCode.EMAIL_IS_EXISTED);
-        }
-
-        User newUser = userMapper.toUser(request);
-        newUser.setFullName(request.getFullName());
-        newUser.setEmail(request.getEmail());
-        newUser.setPassword(passwordEncoder.encode(request.getPassword())); // Sửa lỗi này
-
-        userRepository.save(newUser);
-
-        return userMapper.toUserResponse(newUser);
-    }
-
     public UserResponse getUserById(Long userId){
         User user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         return UserResponse.builder()
@@ -64,4 +46,25 @@ public class UserService {
                 .provider(user.getProvider())
                 .build();
     }
+
+    public UserResponse registerUser(UserCreateRequest request) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new AppException(ErrorCode.USER_EXISTS);
+        }
+
+        User user = userMapper.toUser(request);
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setAvatarUrl(request.getAvatar());
+        user.setProvider(request.getProvider());
+        user.setRole(request.getRole());
+
+        userRepository.save(user);
+        return userMapper.toUserResponse(user);
+
+    }
+
+
+
 }

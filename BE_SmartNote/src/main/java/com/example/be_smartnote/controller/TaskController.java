@@ -2,11 +2,8 @@ package com.example.be_smartnote.controller;
 
 import com.example.be_smartnote.dto.request.ApiResponse;
 import com.example.be_smartnote.dto.request.TaskRequest;
-import com.example.be_smartnote.dto.request.UserRequest;
-import com.example.be_smartnote.dto.response.NoteResponseWrapper;
 import com.example.be_smartnote.dto.response.TaskResponse;
 import com.example.be_smartnote.dto.response.TaskResponseWrapper;
-import com.example.be_smartnote.dto.response.UserResponse;
 import com.example.be_smartnote.entities.Task;
 import com.example.be_smartnote.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +11,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @RestController
@@ -24,10 +19,18 @@ public class TaskController {
     @Autowired
     private  TaskService taskService;
     @GetMapping
-    public ApiResponse<TaskResponseWrapper> getAllTask(@RequestParam(defaultValue = "1") int page, @RequestParam int size) {
+    public ApiResponse<TaskResponseWrapper> getAllTask(@RequestParam(defaultValue = "1") int page, @RequestParam int size, @RequestParam Long userId) {
         Pageable pageable = PageRequest.of(page-1, size);
         return ApiResponse.<TaskResponseWrapper>builder()
-                .result(taskService.getAllTask(pageable))
+                .result(taskService.getAllTaskPageable(pageable, userId))
+                .build();
+    }
+
+
+    @GetMapping("/getAll")
+    public ApiResponse<TaskResponseWrapper> getAllTask() {
+        return ApiResponse.<TaskResponseWrapper>builder()
+                .result(taskService.getAllTask())
                 .build();
     }
 
@@ -43,6 +46,12 @@ public class TaskController {
     @PostMapping("/create")
     public ApiResponse<TaskResponse> creatTask(@RequestBody TaskRequest request) {
         var result = taskService.createTask(request);
+        return new ApiResponse<>(1000, "success", result);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ApiResponse<Boolean> deleteTask(@PathVariable Long id){
+        var result = taskService.deleteTask(id);
         return new ApiResponse<>(1000, "success", result);
     }
 }

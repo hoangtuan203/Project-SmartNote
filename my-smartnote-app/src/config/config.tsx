@@ -7,3 +7,8 @@ export const FacebookConfig = {
   appId: "1695819107932744",
   callbackUrl: "http://localhost:5173/oauth2/callback/facebook",
 };
+
+export const CaptchaConfig = {
+  siteKey : "6LdBbwgrAAAAAJefn_uIXpa8mAfjznzNxykfV9ZY",
+  secretKey : "6LdBbwgrAAAAAIK9B0wXBlV58APPTpHi5p_vxx5F"
+}

@@ -19,13 +19,12 @@ public class InviteToken {
     @Column(nullable = false, unique = true)
     private String token;
 
-    // Thay đổi thuộc tính user từ kiểu đối tượng User thành kiểu String để lưu email
     @Column(name = "email", nullable = true)
-    private String email;  // Lưu email của user
+    private String email;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = true)  // Đặt tên cột làm khóa ngoại
-    private User user;  // Liên kết với bảng User qua khóa ngoại
+    @JoinColumn(name = "user_id", nullable = true)
+    private User user;
 
     @Column(nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
@@ -37,18 +36,16 @@ public class InviteToken {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    private LocalDateTime acceptedAt; // Khi user accept lời mời
+    private LocalDateTime acceptedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private InviteStatus status = InviteStatus.PENDING; // Mặc định là PENDING
+    private InviteStatus status = InviteStatus.PENDING;
 
-    // Liên kết với Note
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "note_id", nullable = true)
     private Note note;
 
-    // Liên kết với Task
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "task_id", nullable = true)
     private Task task;

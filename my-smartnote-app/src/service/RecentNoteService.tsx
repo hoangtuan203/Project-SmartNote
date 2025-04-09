@@ -2,7 +2,7 @@ import httpRequest from "@/utils/httpRequest";
 
 export interface RecentNote {
   id: string;
-  userId: string;
+  userId: number;
   noteId: number;
   note_title: string;
   last_opend: string;
@@ -15,13 +15,15 @@ interface RecentNoteResponse {
 }
 
 export const fetchRecentNotes = async (
-  quantity: number
+  quantity: number,
+  userId: number
 ): Promise<RecentNote[]> => {
   try {
+   
     const response = await httpRequest.get<RecentNoteResponse>(
       "/recent-note/getListByQuantity",
       {
-        params: { quantity },
+        params: { quantity, userId },
       }
     );
 

@@ -17,4 +17,6 @@ public class TaskRequest {
     LocalDateTime dueDate;
     String status;
     String priority;
+    String assignee;
+
 }

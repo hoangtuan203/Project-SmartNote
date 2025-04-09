@@ -25,7 +25,10 @@ public enum ErrorCode {
 
     NOTE_NOT_EXITS(1014,"Note not exited", HttpStatus.BAD_REQUEST),
     TASK_NOT_EXITS(1015,"Task not exited", HttpStatus.BAD_REQUEST),
-    COMMENT_NOT_EXITS(1015,"Task not exited", HttpStatus.BAD_REQUEST),
+    COMMENT_NOT_EXITS(1015,"Comment not exited", HttpStatus.BAD_REQUEST),
+    NOTIFICATION_NOT_EXITS(1016 , "Notification note exited !", HttpStatus.BAD_REQUEST),
+    FILE_NOT_EXITS(1017 , "File note exited !", HttpStatus.BAD_REQUEST),
+    COMMENT_NOT_EXISTED(1018, "Comment note exited", HttpStatus.BAD_REQUEST)
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

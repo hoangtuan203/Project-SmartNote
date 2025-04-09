@@ -13,23 +13,23 @@ public class NotificationConsumer {
     private final SimpMessagingTemplate messagingTemplate;
     private final NotificationMapper notificationMapper;
 
-    public NotificationConsumer(SimpMessagingTemplate messagingTemplate, NotificationMapper notificationMapper) {
+    public NotificationConsumer(SimpMessagingTemplate messagingTemplate,
+                                NotificationMapper notificationMapper) {
         this.messagingTemplate = messagingTemplate;
         this.notificationMapper = notificationMapper;
     }
 
-    // Lắng nghe thông báo từ Kafka
     @KafkaListener(topics = "notification-topic", groupId = "notification-group")
     public void consume(String message) {
         System.out.println("📥 Nhận thông báo từ Kafka: " + message);
 
-        // Chuyển đổi message thành NotificationResponse
+        // Giả lập tạo đối tượng Notification từ message (nếu có hệ thống parser riêng thì dùng)
         Notification notification = new Notification();
         notification.setMessage(message);
 
         NotificationResponse response = notificationMapper.toNotificationResponse(notification);
 
-        // Gửi thông báo qua WebSocket tới các client đang subscribe /topic/notifications
+        // Gửi message tới tất cả các client đang subscribe topic /topic/notifications
         messagingTemplate.convertAndSend("/topic/notifications", response);
     }
 }

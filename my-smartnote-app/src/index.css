@@ -6,7 +6,6 @@
 
 @layer base {
   :root {
-
     --background: 0 0% 100%;
 
     --foreground: 0 0% 3.9%;
@@ -55,10 +54,9 @@
 
     --chart-5: 27 87% 67%;
 
-    --radius: 0.5rem
+    --radius: 0.5rem;
   }
   .dark {
-
     --background: 0 0% 3.9%;
 
     --foreground: 0 0% 98%;
@@ -105,9 +103,8 @@
 
     --chart-4: 280 65% 60%;
 
-    --chart-5: 340 75% 55%
+    --chart-5: 340 75% 55%;
   }
-  
 }
 
 @layer base {
@@ -119,8 +116,6 @@
   }
 }
 
-
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -130,5 +125,50 @@
   }
 }
 
+/* Trong file CSS của bạn (ví dụ: styles.css) */
+[contenteditable] h1 {
+  font-size: 2em; /* Kích thước lớn */
+  font-weight: bold; /* Đậm */
+  margin: 0.67em 0; /* Khoảng cách trên dưới */
+}
 
+[contenteditable] h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 0.83em 0;
+}
 
+[contenteditable] ul {
+  list-style-type: disc; /* Chấm đen cho cấp 1 */
+  margin: 1em 0;
+  padding-left: 2em;
+}
+[contenteditable] ul ul {
+  list-style-type: circle; /* Chấm trắng cho cấp 2 */
+  margin: 0;
+  padding-left: 2em;
+}
+[contenteditable] ol {
+  list-style-type: decimal; /* Số thứ tự cho cấp 1 */
+  margin: 1em 0;
+  padding-left: 2em;
+}
+[contenteditable] ol ol {
+  list-style-type: lower-alpha; /* a, b, c cho cấp 2 */
+  margin: 0;
+  padding-left: 2em;
+}
+
+[contenteditable] blockquote {
+  margin: 1em 2em;
+  font-style: italic;
+  border-left: 4px solid #ccc;
+  padding-left: 1em;
+}
+
+[contenteditable] pre {
+  background: #f4f4f4;
+  padding: 1em;
+  font-family: monospace;
+  white-space: pre-wrap;
+}

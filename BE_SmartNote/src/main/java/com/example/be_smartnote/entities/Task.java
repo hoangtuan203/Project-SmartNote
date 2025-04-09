@@ -52,4 +52,6 @@ public class Task {
     @Column(name = "is_notified")
     private int isNotified = 0;
 
+    @Column(name = "assignee", length = 100)
+    private String assignee;
 }

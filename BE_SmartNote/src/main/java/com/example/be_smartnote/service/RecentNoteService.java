@@ -35,9 +35,9 @@ public class RecentNoteService {
         this.userRepository = userRepository;
     }
 
-    public List<RecentNoteResponse> getListRecentNote(int quantity) {
+    public List<RecentNoteResponse> getListRecentNote(int quantity, Long userId) {
         Pageable pageable = PageRequest.of(0, quantity);
-        List<RecentNote> listRecentNote = recentNoteRepository.findRecentNotesWithUsersAndNotes(pageable);
+        List<RecentNote> listRecentNote = recentNoteRepository.findRecentNotesByUserId(userId, pageable); // Sử dụng phương thức tìm theo userId
 
         return listRecentNote.stream().map(recentNote -> RecentNoteResponse.builder()
                 .id(recentNote.getId())
@@ -48,6 +48,7 @@ public class RecentNoteService {
                 .build()
         ).collect(Collectors.toList());
     }
+
 
     public List<RecentNoteResponse> saveOrUpdateRecentNote(Long userId, Long noteId) {
         Optional<RecentNote> existingNote = recentNoteRepository.findByUserAndNote(userId, noteId);
@@ -73,7 +74,7 @@ public class RecentNoteService {
         }
 
         // Trả về danh sách ghi chú gần đây
-        return getListRecentNote(10);
+        return getListRecentNote(10,userId);
     }
 
 

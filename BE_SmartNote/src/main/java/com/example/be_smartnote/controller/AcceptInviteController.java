@@ -22,8 +22,11 @@ public class AcceptInviteController {
     }
 
     @PostMapping("/send")
-    public String sendInvitation(@RequestParam String email, @RequestParam Role role) {
-        inviteService.sendInvitation(email, role);
+    public String sendInvitation(@RequestParam String email, @RequestParam Role role,
+                                 @RequestParam(required = false) Long noteId,
+                                 @RequestParam(required = false) Long taskId,
+                                 @RequestParam(required = false) Long userId) {
+        inviteService.sendInvitation(email, role, noteId, taskId, userId);
         return "Lời mời đã được gửi đến " + email;
     }
 
@@ -36,10 +39,11 @@ public class AcceptInviteController {
     @PostMapping("/generate-invite-link")
     public ApiResponse<InviteLinkResponse> generateInviteLink(
             @RequestParam Role role,
-            @RequestParam(required = false) Long noteId,  // Tham số tùy chọn noteId
-            @RequestParam(required = false) Long taskId  // Tham số tùy chọn taskId,
+            @RequestParam(required = false) Long noteId,
+            @RequestParam(required = false) Long taskId,
+            @RequestParam(required = false) Long userId
     ) {
-        InviteLinkResponse result = inviteService.generateInviteLink(role, noteId, taskId );
+        InviteLinkResponse result = inviteService.generateInviteLink(role, noteId, taskId, userId);
 
         return ApiResponse.<InviteLinkResponse>builder()
                 .code(1000)
@@ -54,8 +58,8 @@ public class AcceptInviteController {
     }
 
     @PostMapping("/request-access")
-    public ResponseEntity<ApiResponse<String>> requestAccess(@RequestParam String token,@RequestParam String email) {
-        return inviteService.requestAccess(token,email);
+    public ResponseEntity<ApiResponse<String>> requestAccess(@RequestParam String token, @RequestParam String email) {
+        return inviteService.requestAccess(token, email);
     }
 
     @PostMapping("/approve")

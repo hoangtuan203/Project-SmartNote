@@ -1,5 +1,7 @@
 package com.example.be_smartnote.dto.response;
 
+import com.example.be_smartnote.entities.FileType;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -19,7 +21,12 @@ public class NoteResponse {
     String content;
     Boolean isPinned; // Đúng kiểu dữ liệu Boolean
     String color;
-    Instant createdAt; // Đặt tên trùng với Note entity
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    LocalDateTime createdAt; // Đặt tên trùng với Note entity
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    LocalDateTime updatedAt;
     List<String> imageUrls; // Danh sách URL của ảnh
+    List<String> fileUrls;
+
 
 }

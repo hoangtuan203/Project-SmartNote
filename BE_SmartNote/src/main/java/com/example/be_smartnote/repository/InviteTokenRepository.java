@@ -17,6 +17,4 @@ public interface InviteTokenRepository extends JpaRepository<InviteToken, Long> 
     @Query(value = "SELECT * FROM invite_tokens ORDER BY created_at DESC LIMIT 1", nativeQuery = true)
     InviteToken findLatestInviteToken();
 
-
-
 }

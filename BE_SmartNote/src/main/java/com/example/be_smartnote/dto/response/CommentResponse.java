@@ -13,6 +13,7 @@ import java.time.Instant;
 public class CommentResponse {
     Long commentId;
     Long userId;
+    String username;
     Long noteId;
     String content;
     Instant createdAt;

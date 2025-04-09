@@ -11,15 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { fetchHolidays, HolidayEvent } from "@/service/CalendarService";
-
-interface Task {
-  id: number;
-  title: string;
-  description: string;
-  dueDate: string;
-  priority: string;
-  completed: boolean;
-}
+import { Task } from "@/service/TaskService";
+import FullCalendar from "@fullcalendar/react";
 
 interface CalendarComponentProps {
   tasks: Task[];
@@ -33,7 +26,7 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ tasks }) => {
   const calendarRef = useRef<Calendar | null>(null);
 
   // Lấy màu sắc theo mức độ ưu tiên
-  const getPriorityColor = (priority: string, completed: boolean) => {
+  const getPriorityColor = (priority: string, completed: string) => {
     if (completed) return "#9CA3AF"; // Xám cho task hoàn thành
     return priority === "Cao"
       ? "#EF4444"
@@ -46,11 +39,12 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ tasks }) => {
     if (tasks.length > 0) {
       setCalendarEvents(
         tasks.map((task) => ({
-          id: task.id.toString(),
+          id: task.taskId.toString(),
           title: task.title,
           start: task.dueDate,
-          color: getPriorityColor(task.priority, task.completed),
+          color: getPriorityColor(task.priority, task.status),
           description: task.description,
+          assignee: task.assignee,
         }))
       );
     }
@@ -59,7 +53,6 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ tasks }) => {
   useEffect(() => {
     const loadHolidays = async () => {
       if (accessToken) {
-        console.log("access token", accessToken);
         const holidays = await fetchHolidays(accessToken);
         setCalendarEvents((prev) => [...prev, ...holidays]);
       } else {
@@ -95,7 +88,6 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ tasks }) => {
   return (
     <div className="p-6 bg-white dark:bg-gray-900 shadow-lg rounded-lg">
       <div className="flex justify-between items-center mb-4">
-        
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="default">Thêm sự kiện</Button>
@@ -113,42 +105,70 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ tasks }) => {
                 setSelectedDate(date.toLocaleDateString("sv-SE"))
               }
             />
-
             <Button onClick={addEvent} className="w-full">
               Thêm
             </Button>
           </DialogContent>
-          <div className="flex justify-between items-center mb-2">
-           
-            <select
-              className="border rounded-md p-1"
-              onChange={handleViewChange}
-              defaultValue="dayGridMonth"
-            >
-              <option value="dayGridMonth">Tháng</option>
-              <option value="timeGridWeek">Tuần</option>
-              <option value="timeGridDay">Ngày</option>
-            </select>
-          </div>
         </Dialog>
+        <select
+          className="border rounded-md p-1"
+          onChange={handleViewChange}
+          defaultValue="dayGridMonth"
+        >
+          <option value="dayGridMonth">Tháng</option>
+          <option value="timeGridWeek">Tuần</option>
+          <option value="timeGridDay">Ngày</option>
+        </select>
       </div>
 
-      <Calendar
+      <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
         events={calendarEvents}
         eventContent={(eventInfo) => (
-          <div
-            className="p-1 text-white text-sm rounded-md shadow-md"
-            style={{
-              backgroundColor: eventInfo.event.extendedProps.color,
-              padding: "5px",
-            }}
-          >
-            <strong>{eventInfo.event.title}</strong>
-            <br />
-            <small>{eventInfo.event.extendedProps.description}</small>
+          <div className="flex items-center w-full p-1">
+            {/* Thanh màu bên trái giống Google Calendar */}
+            <div
+              className="w-1 h-full mr-2 rounded"
+              style={{
+                backgroundColor: eventInfo.event.backgroundColor,
+              }}
+            />
+            <div className="flex-1 overflow-hidden">
+              {/* Tiêu đề task */}
+              <div className="text-xl font-semibold text-gray-900 dark:text-gray-100 truncate">
+                {eventInfo.event.title}
+              </div>
+
+              {/* Mô tả task */}
+              {/* <div className="text-sm text-gray-700 dark:text-gray-400 mt-1 truncate">
+                {eventInfo.event.extendedProps.description}
+              </div> */}
+
+              {/* Người thực hiện task */}
+              <div className="text-xs text-gray-500 dark:text-gray-300 mt-1 truncate">
+                <span className="font-semibold">👤</span>
+                {eventInfo.event.extendedProps.assignee}
+              </div>
+
+              {/* Thời gian (nếu có) */}
+              <div className="text-xs text-gray-500 dark:text-gray-300 mt-1 truncate">
+                <span className="font-semibold">⌚ </span>
+                {(() => {
+                  const rawDate = eventInfo.event.extendedProps.start;
+                  if (!rawDate) return "Không có thời gian"; // Kiểm tra nếu không có dữ liệu
+
+                  const date = new Date(rawDate);
+                  if (isNaN(date.getTime())) return "Ngày không hợp lệ"; // Kiểm tra nếu ngày bị lỗi
+
+                  const hours = date.getHours().toString().padStart(2, "0");
+                  const minutes = date.getMinutes().toString().padStart(2, "0");
+
+                  return `${hours}:${minutes}`;
+                })()}
+              </div> 
+            </div>
           </div>
         )}
         headerToolbar={{
@@ -159,6 +179,8 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({ tasks }) => {
         height="auto"
         timeZone="Asia/Ho_Chi_Minh"
         locale="vi"
+        eventDisplay="block" // Đảm bảo sự kiện hiển thị dưới dạng khối
+        eventTextColor="#000000" // Màu chữ đen để tương phản với nền
       />
     </div>
   );
