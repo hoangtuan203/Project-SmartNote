@@ -31,7 +31,7 @@ interface TaskCreateResponse {
 export const fetchTask = async (
   page: number,
   size: number,
-  userId : number
+  userId: number
 ): Promise<TaskResponse["result"]> => {
   try {
     const response = await httpRequest.get<TaskResponse>("/task", {
@@ -87,12 +87,56 @@ export const deleteTask = async (taskId: number): Promise<boolean> => {
     const response = await httpRequest.delete(`/task/delete/${taskId}`);
 
     if (response.data.code === 1000) {
-      return true;  // Task deletion was successful
+      return true; // Task deletion was successful
     }
 
     throw new Error(response.data.message || "Xóa công việc thất bại");
   } catch (error) {
     console.error("Error deleting task:", error);
     throw new Error("Failed to delete task");
+  }
+};
+
+export const updateTaskStatus = async (taskId: number): Promise<boolean> => {
+  try {
+    const response = await httpRequest.post(`/task/updateStatus/${taskId}`);
+
+    if (response.data.code === 1000) {
+      return true; // Task deletion was successful
+    }
+
+    throw new Error(response.data.message || "Update Status Task failed");
+  } catch (error) {
+    console.error("Error deleting task:", error);
+    throw new Error("Failed to delete task");
+  }
+};
+
+export const fetchTaskFilter = async (
+  page: number,
+  size: number,
+  userId: number,
+  priority?: string,
+  title?: string
+): Promise<TaskResponse["result"]> => {
+  try {
+    const response = await httpRequest.get<TaskResponse>("/task/filter", {
+      params: {
+        page,
+        size,
+        userId,
+        ...(priority && priority !== "Tất cả" && { priority }), // Chỉ thêm priority nếu có giá trị và không phải "Tất cả"
+        ...(title && { title }), // Chỉ thêm title nếu có giá trị
+      },
+    });
+
+    if (response.data.code === 1000) {
+      return response.data.result!;
+    }
+
+    throw new Error("Không thể lấy danh sách công việc đã lọc");
+  } catch (error) {
+    console.error("Error fetching filtered tasks:", error);
+    throw new Error("Failed to fetch filtered tasks");
   }
 };

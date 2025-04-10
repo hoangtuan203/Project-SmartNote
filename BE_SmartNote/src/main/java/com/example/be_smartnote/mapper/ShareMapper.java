@@ -22,5 +22,6 @@ public interface ShareMapper {
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "task.id", target = "taskId")
     @Mapping(source = "note.id", target = "noteId")
+    @Mapping(source = "user.email", target = "email")
     ShareResponse toShareResponse(Share share);
 }

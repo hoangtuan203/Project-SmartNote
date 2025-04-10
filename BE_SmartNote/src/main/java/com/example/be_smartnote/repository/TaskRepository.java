@@ -24,4 +24,35 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByDueDateBetweenAndIsNotifiedFalse(@Param("now") LocalDateTime now,
                                                       @Param("notifyThreshold") LocalDateTime notifyThreshold);
 
+    Page<Task> findByUserIdAndPriority(Long userId, String priority, Pageable pageable);
+
+    Page<Task> findByUserIdAndTitleContainingIgnoreCase(Long userId, String title, Pageable pageable);
+
+    Page<Task> findByUserIdAndPriorityAndTitleContainingIgnoreCase(Long userId, String priority, String title, Pageable pageable);
+    Page<Task> findByUserId(Long userId, Pageable pageable);
+
+
+    @Query("SELECT FUNCTION('DAYNAME', t.createdAt), COUNT(t) " +
+            "FROM Task t WHERE t.status = 'Đã hoàn thành' AND t.user.id = :userId " +
+            "GROUP BY FUNCTION('DAYNAME', t.createdAt)")
+    List<Object[]> countCompletedTasksByDay(@Param("userId") Long userId);
+
+    // 🥧 2. Completion Ratio (Pie Chart)
+    @Query("SELECT t.status, COUNT(t) " +
+            "FROM Task t WHERE t.user.id = :userId " +
+            "GROUP BY t.status")
+    List<Object[]> getCompletionRatio(@Param("userId") Long userId);
+
+    // 📊 3. Tasks by Priority (Bar Chart)
+    @Query("SELECT t.priority, COUNT(t) " +
+            "FROM Task t WHERE t.user.id = :userId " +
+            "GROUP BY t.priority")
+    List<Object[]> countTasksByPriority(@Param("userId") Long userId);
+
+    // 📊 4. Overdue Tasks by Date (Bar Chart)
+    @Query("SELECT FUNCTION('DATE', t.dueDate), COUNT(t) " +
+            "FROM Task t WHERE t.status != 'Đã hoàn thành' AND t.dueDate < CURRENT_TIMESTAMP " +
+            "AND t.user.id = :userId " +
+            "GROUP BY FUNCTION('DATE', t.dueDate)")
+    List<Object[]> countOverdueTasksByDate(@Param("userId") Long userId);
 }

@@ -23,6 +23,7 @@ public class ShareResponse {
     String permission;
     String tokenShare;
     Long userId;
+    String email;
     Long noteId;
     Long taskId;
 }

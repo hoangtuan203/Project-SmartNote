@@ -5,6 +5,7 @@ import { Note } from "@/service/NoteService";
 import { getAllNotes } from "@/service/NoteService";
 import { getAllUser } from "@/service/UserService";
 import NoteContent from "@/components/note/NoteContent";
+import { co } from "node_modules/@fullcalendar/core/internal-common";
 export default function CreateNote() {
 
 
@@ -12,14 +13,14 @@ export default function CreateNote() {
 
   const location = useLocation();
   const note: Note | null = location.state || null;
-  const pathParts = location.pathname.split("/"); // ["", "note", "26"]
-  const noteId = Number(pathParts[pathParts.length - 1]); // 26
-
-
+  const pathParts = location.pathname.split("/"); // ["", "note", "26"] hoặc ["", "note"]
+  const lastPart = pathParts[pathParts.length - 1];
+  const noteId = lastPart && !isNaN(Number(lastPart)) ? Number(lastPart) : null; // Kiểm tra hợp lệ
   const [mentionPeopleList, setMentionPeopleList] = useState<string[]>([]);
   const [mentionNoteList, setMentionNoteList] = useState<
     { id: number; title: string }[]
   >([]);
+
 
 
 
@@ -81,7 +82,7 @@ export default function CreateNote() {
   return (
     <div className="w-full min-h-screen px-10 py-6 bg-white text-black">
       <div>
-        <NoteContent noteId={noteId || null} />
+        <NoteContent noteId={noteId} />
       </div>
     </div>
   );

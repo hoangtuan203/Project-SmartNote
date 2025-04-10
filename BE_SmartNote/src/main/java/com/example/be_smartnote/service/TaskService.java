@@ -1,9 +1,7 @@
 package com.example.be_smartnote.service;
 
 import com.example.be_smartnote.dto.request.TaskRequest;
-import com.example.be_smartnote.dto.response.NoteResponse;
-import com.example.be_smartnote.dto.response.TaskResponse;
-import com.example.be_smartnote.dto.response.TaskResponseWrapper;
+import com.example.be_smartnote.dto.response.*;
 import com.example.be_smartnote.entities.Task;
 import com.example.be_smartnote.entities.User;
 import com.example.be_smartnote.exception.AppException;
@@ -18,13 +16,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -159,5 +156,69 @@ public class TaskService {
         return true;
     }
 
+    public boolean updateTaskStatus(Long id) {
+        Optional<Task> taskUpdate = taskRepository.findById(id);
+        if (taskUpdate.isPresent()) {
+            Task task = taskUpdate.get();
+            if ("Đang thực hiện".equals(task.getStatus())) {
+                task.setStatus("Đã hoàn thành");
+                taskRepository.save(task);
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
 
+    public TaskResponseWrapper filterTasks(Pageable pageable, Long userId, String priority, String title) {
+        Page<Task> tasks;
+        if (priority != null && title != null) {
+            tasks = taskRepository.findByUserIdAndPriorityAndTitleContainingIgnoreCase(userId, priority, title, pageable);
+        } else if (priority != null) {
+            tasks = taskRepository.findByUserIdAndPriority(userId, priority, pageable);
+        } else if (title != null) {
+            tasks = taskRepository.findByUserIdAndTitleContainingIgnoreCase(userId, title, pageable);
+        } else {
+            tasks = taskRepository.findByUserId(userId, pageable);
+        }
+
+        Page<TaskResponse> taskResponses = tasks.map(taskMapper::toTaskResponse);
+        return new TaskResponseWrapper(
+                taskResponses.getTotalPages(),
+                taskResponses.getTotalElements(),
+                taskResponses.getContent()
+        );
+
+
+
+    }
+    public List<TaskByDateResponse> getTasksByDay(Long userId) {
+        return taskRepository.countCompletedTasksByDay(userId).stream()
+                .map(row -> new TaskByDateResponse((String) row[0], (Long) row[1]))
+                .toList();
+    }
+
+    public List<CompletionRatioResponse> getCompletionRatio(Long userId) {
+        return taskRepository.getCompletionRatio(userId).stream()
+                .map(row -> new CompletionRatioResponse((String) row[0], (Long) row[1]))
+                .toList();
+    }
+
+    public List<TaskByPriorityResponse> getTasksByPriority(Long userId) {
+        return taskRepository.countTasksByPriority(userId).stream()
+                .map(row -> new TaskByPriorityResponse((String) row[0], (Long) row[1]))
+                .toList();
+    }
+
+    public List<OverdueTaskResponse> getOverdueTasks(Long userId) {
+        return taskRepository.countOverdueTasksByDate(userId).stream()
+                .map(row -> {
+                    // Handle the date conversion
+                    java.sql.Date sqlDate = (java.sql.Date) row[0];
+                    String dateString = sqlDate.toLocalDate().toString(); // Convert to String
+                    Long count = (Long) row[1];
+                    return new OverdueTaskResponse(dateString, count);
+                })
+                .toList();
+    }
 }

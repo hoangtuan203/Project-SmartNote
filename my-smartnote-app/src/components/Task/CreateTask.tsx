@@ -16,10 +16,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { createTask } from "@/service/TaskService";
+import { createTask, Task } from "@/service/TaskService";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
+import { useLocation } from "react-router-dom";
 const priorityLevels = ["Cao", "Trung bình", "Thấp"];
 const statusLevels = ["Đang hoàn thành", "Đã hoàn thành", "Đang thực hiện"];
 
@@ -30,9 +31,10 @@ export default function CreateTask() {
     description: "",
     dueDate: null as DateValue | null,
     priority: "Thấp",
-    status: "Đang hoàn thành",
+    status: "Đang thực hiện",
     assignee: "",
   });
+
 
   const [priorityQuery, setPriorityQuery] = useState("");
   const [statusQuery, setStatusQuery] = useState("");
@@ -44,6 +46,22 @@ export default function CreateTask() {
   const filteredStatus = statusLevels.filter((level) =>
     level.toLowerCase().includes(statusQuery.toLowerCase())
   );
+  const location = useLocation();
+  const taskToEdit = location.state?.task as Task | undefined;
+  
+  React.useEffect(() => {
+    if (taskToEdit) {
+      setNewTask({
+        title: taskToEdit.title,
+        description: taskToEdit.description,
+        dueDate: null, // Không cần dùng trong state này vì dùng date riêng
+        priority: taskToEdit.priority,
+        status: taskToEdit.status,
+        assignee: taskToEdit.username || "",
+      });
+      setDate(new Date(taskToEdit.dueDate));
+    }
+  }, [taskToEdit]);
 
   //create task
   const handleAddTask = useCallback(async () => {
@@ -76,16 +94,17 @@ export default function CreateTask() {
         assignee: newTask.description,
       });
       toast.success("Task created successfully");
-      console.log(createdTask);
+      // navigate("/task/")
       if (createdTask) {
         setNewTask({
           title: "",
           description: "",
           dueDate: null,
           priority: "Thấp",
-          status: "Đang hoàn thành",
+          status: "Đang thực hiện",
           assignee: ""
         });
+
       } else {
         throw new Error("Task creation failed");
       }

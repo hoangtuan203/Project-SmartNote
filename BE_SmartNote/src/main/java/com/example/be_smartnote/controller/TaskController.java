@@ -54,4 +54,26 @@ public class TaskController {
         var result = taskService.deleteTask(id);
         return new ApiResponse<>(1000, "success", result);
     }
+
+    @PostMapping("/updateStatus/{id}")
+    public ApiResponse<Boolean> updateTaskStatus(@PathVariable Long id){
+        var result = taskService.updateTaskStatus(id);
+        return new ApiResponse<>(1000, "update status success", result);
+    }
+
+    @GetMapping("/filter")
+    public ApiResponse<TaskResponseWrapper> filterTasks(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam int size,
+            @RequestParam Long userId,
+            @RequestParam(required = false) String priority, // Optional
+            @RequestParam(required = false) String title) { // Optional
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return ApiResponse.<TaskResponseWrapper>builder()
+                .code(1000)
+                .message("success")
+                .result(taskService.filterTasks(pageable, userId, priority, title))
+                .build();
+    }
+
 }

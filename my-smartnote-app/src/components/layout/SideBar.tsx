@@ -4,7 +4,7 @@ import { IoCalendarOutline } from "react-icons/io5";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTheme } from "@/context/ThemeContext";
 import { RiGitRepositoryPrivateLine, RiShareForwardLine } from "react-icons/ri";
-import { BsTrash2 } from "react-icons/bs";
+import { Activity, BarChart } from "lucide-react";
 import { GoTasklist } from "react-icons/go";
 import { FaRegNoteSticky } from "react-icons/fa6";
 import { GrHomeRounded } from "react-icons/gr";
@@ -161,6 +161,12 @@ const Sidebar = () => {
               label: "Tasks",
               icon: <GoTasklist className="text-xl" />,
             },
+            {
+              id: 6,
+              path: "/statistical",
+              label: "Statistical",
+              icon: <Activity className="text-xl" />,
+            }
            
           ].map(({ id, path, label, icon }) => (
             <li key={id}>

@@ -43,10 +43,10 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
     const userId = localStorage.getItem("userId") || "unknown";
 
     const [currentTitle, setCurrentTitle] = useState("New Page");
-
     const [initialLoad, setInitialLoad] = useState(true);
     const [imageId, setImageId] = useState<number[]>([]);
     const [fileId, setFileId] = useState<number[]>([]);
+
 
     const previousValues = useRef({
       title: currentTitle,
@@ -738,7 +738,6 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
 
           let updatedImageUrls: string[] = [];
 
-          // ⭐️ Luôn luôn lấy lại ảnh từ DB nếu không đang thêm ảnh
           if (!isImage) {
             const imagesData = await getNoteImages(noteId);
             updatedImageUrls = imagesData
@@ -794,29 +793,25 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
               return;
             }
           }
-
-          const userIdNumber = userId ? Number(userId) : null;
-          if (!userIdNumber) {
-            console.error("ID người dùng không hợp lệ");
-            return;
-          }
+          console.log(noteId)
 
           const noteData: Partial<NoteRequest> = {
             title: currentTitle,
             content: noteContent,
-            userId: userIdNumber,
+            userId: Number(userId),
             color: "#ffffff",
             updatedAt: new Date().toISOString().replace("Z", ""),
           };
 
+          console.log("note id props :", noteId)
           if (!isImage) {
             noteData.imageUrls = noteImages;
           } else {
             noteData.imageUrls = updatedImageUrls;
           }
 
-          // const noteIdLocal = localStorage.getItem("noteId")
-          if (!noteId || noteId == -1) {
+          if (noteId == null) {
+            console.log("note id save :", noteId)
             noteData.imageUrls = updatedImageUrls;
             const newNote = await saveNote(noteData as NoteRequest);
             noteId = newNote.noteId;
@@ -1028,6 +1023,7 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
                   noteId={noteId !== null ? String(noteId) : null}
                 />
               )}
+
             </div>
           </div>
         </div>

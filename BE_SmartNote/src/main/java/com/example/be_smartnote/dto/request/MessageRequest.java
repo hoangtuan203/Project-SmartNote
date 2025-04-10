@@ -1,12 +1,12 @@
 package com.example.be_smartnote.dto.request;
 
-public class Message {
+public class MessageRequest {
     private String content;
 
-    public Message() {
+    public MessageRequest() {
     }
 
-    public Message(String content) {
+    public MessageRequest(String content) {
         this.content = content;
     }
 

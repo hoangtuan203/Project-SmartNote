@@ -13,6 +13,8 @@ import FacebookCallback from "@/pages/Authentication/FacebookCallback";
 import ChatHome from "@/components/chat";
 import InvitePage from "@/components/share/InvitePage";
 import RegisterPage from "@/pages/Authentication/Register";
+import path from "path";
+import Dashboard from "@/pages/Statistical/Dashboard";
 
 const publicRoutes = [
   { path: "/", component: Home, layout: DefaultLayout },
@@ -29,7 +31,8 @@ const publicRoutes = [
   { path: "/task/:id", component: CreateTask, layout: DefaultLayout },
   { path : "/inbox", component : ChatHome, layout : DefaultLayout},
   { path : "/join", component : InvitePage, layout : null},
-  { path : "/register", component : RegisterPage, layout : null}
+  { path : "/register", component : RegisterPage, layout : null},
+  {path : "/statistical", component: Dashboard, layout : DefaultLayout}
 ];
 
 export default publicRoutes;

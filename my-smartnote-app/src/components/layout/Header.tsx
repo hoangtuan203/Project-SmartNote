@@ -53,7 +53,7 @@ const Header = () => {
         setCurrentTitle(`Private / ${idFromPath}`);
         setShareId({ type: "note", id: numericId }); // Lưu type là "note"
       } else {
-        setCurrentTitle("ID ghi chú không hợp lệ");
+        setCurrentTitle("New Note");
         setShareId(null);
       }
     } else if (location.pathname.startsWith("/task/")) {
@@ -63,7 +63,7 @@ const Header = () => {
         setCurrentTitle(`Task : ${idFromPath}`);
         setShareId({ type: "task", id: numericId }); // Lưu type là "task"
       } else {
-        setCurrentTitle("ID nhiệm vụ không hợp lệ");
+        setCurrentTitle("New Task");
         setShareId(null);
       }
     } else {

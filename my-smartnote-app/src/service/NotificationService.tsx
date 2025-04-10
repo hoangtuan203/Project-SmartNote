@@ -56,6 +56,7 @@ export const ListNotification = async (
 let stompClient: Client;
 
 export const GetMessageNotifications = (callback: (message: string) => void) => {
+  
   const socket = new SockJS("http://localhost:8080/ws");
   
   stompClient = new Client({
@@ -76,8 +77,9 @@ export const GetMessageNotifications = (callback: (message: string) => void) => 
         } catch (err) {
           console.error("❌ Error parsing message:", err);
         }
-      });
+      }); 
     },
+    
     onStompError: (frame) => {
       console.error("❌ STOMP error:", frame);
     },
