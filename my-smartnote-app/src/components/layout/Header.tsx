@@ -42,6 +42,8 @@ const Header = () => {
       "/calendar": "Calendar",
       "/task": "Tasks",
       "/trash": "Trash",
+      "/statistical": "Statistical"
+
     };
 
     // Kiểm tra nếu đang xem chi tiết note/task

@@ -1,19 +1,26 @@
 package com.example.be_smartnote.entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "calendar_events")
+@NoArgsConstructor
+@AllArgsConstructor
 public class CalendarEvent {
+
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 
@@ -30,10 +37,10 @@ public class CalendarEvent {
     private String description;
 
     @Column(name = "start_time", nullable = false)
-    private Instant startTime;
+    private LocalDateTime startTime;
 
     @Column(name = "end_time", nullable = false)
-    private Instant endTime;
+    private LocalDateTime endTime;
 
     @Column(name = "location")
     private String location;
@@ -42,9 +49,8 @@ public class CalendarEvent {
     private String color;
 
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
-
+    private LocalDateTime updatedAt;
 }

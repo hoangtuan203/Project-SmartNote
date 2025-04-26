@@ -21,6 +21,7 @@ import { Image, MessageCircle, Plus, Upload, X } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 import { NoteImage } from "./ImageUploader";
 import { CommentNote } from "./CommentNote";
+import { AiService } from "@/service/AIService";
 
 interface EditableDivProps {
   handleSlashCommand: () => void;
@@ -39,6 +40,7 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
     const [selectedFormat, setSelectedFormat] = useState("p");
 
     const [noteContent, setNoteContent] = useState("");
+    const [suggestedText, setSuggestedText] = useState("");
     const [noteImages, setNoteImages] = useState<string[]>([]);
     const userId = localStorage.getItem("userId") || "unknown";
 
@@ -47,6 +49,8 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
     const [imageId, setImageId] = useState<number[]>([]);
     const [fileId, setFileId] = useState<number[]>([]);
 
+
+    const [caretPosition, setCaretPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
     const previousValues = useRef({
       title: currentTitle,
@@ -70,20 +74,18 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
     const insertTextAtCursor = (text: string) => {
       const selection = window.getSelection();
       if (!selection || !selection.rangeCount) return;
-    
+
       const range = selection.getRangeAt(0);
       range.deleteContents();
       range.insertNode(document.createTextNode(text));
-    
+
       // Di chuyển con trỏ đến sau đoạn text vừa chèn
       range.collapse(false);
       selection.removeAllRanges();
       selection.addRange(range);
     };
-    
 
-
-    const  startListening = () => {
+    const startListening = () => {
       const SpeechRecognitionConstructor =
         window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognitionConstructor) {
@@ -100,7 +102,6 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
         const transcript = event.results[0][0].transcript;
         insertTextAtCursor(` ${transcript}`);
       };
-      
 
       recognition.onend = () => setIsListening(false);
 
@@ -425,6 +426,29 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
     }, []);
 
     useEffect(() => {
+      const timeout = setTimeout(async () => {
+        const text = contentRef.current?.innerText.trim() || "";
+        if (text) {
+          try {
+            const suggestions = await AiService.suggest(text);
+            if (suggestions.length > 0) {
+              setSuggestedText(suggestions[0]);
+            } else {
+              setSuggestedText("");
+            }
+          } catch (error) {
+            console.error("Error fetching suggestions", error);
+            setSuggestedText("");
+          }
+        } else {
+          setSuggestedText("");
+        }
+      }, 800); // Debounce 800ms
+
+      return () => clearTimeout(timeout);
+    }, [noteContent]);
+
+    useEffect(() => {
       if (contentRef.current && initialLoad) {
         contentRef.current.innerHTML = content;
       }
@@ -432,21 +456,38 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
 
     const handleInput = () => {
       if (contentRef.current) {
-        // Tạo một bản sao của contentRef.current để thao tác
+        // 1. Xóa file-display
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = contentRef.current.innerHTML;
-
-        // Xóa tất cả các phần tử có class "file-display"
         const fileDisplays = tempDiv.getElementsByClassName("file-display");
         while (fileDisplays.length > 0) {
           fileDisplays[0].parentNode?.removeChild(fileDisplays[0]);
         }
-
-        // Lấy nội dung đã lọc và gán vào noteContent
-        const filteredContent = tempDiv.innerHTML;
-        setNoteContent(filteredContent);
+    
+        // 2. Lấy text hiện đang gõ
+        const selection = window.getSelection();
+        if (selection && selection.focusNode) {
+          if (selection.focusNode.nodeType === Node.TEXT_NODE) {
+            const text = selection.focusNode.textContent?.trim() || "";
+            setNoteContent(text);
+          } else {
+            const filteredText = tempDiv.textContent?.trim() || "";
+            setNoteContent(filteredText);
+          }
+        }
+    
+        // 3. Lấy vị trí con trỏ (caret)
+        const range = selection?.getRangeAt(0);
+        if (range) {
+          const rect = range.getBoundingClientRect();
+          setCaretPosition({
+            top: rect.top + window.scrollY,
+            left: rect.left + window.scrollX,
+          });
+        }
       }
     };
+    
 
     const handleFormatChange = (format: string) => {
       const selection = window.getSelection();
@@ -793,7 +834,7 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
               return;
             }
           }
-          console.log(noteId)
+          console.log(noteId);
 
           const noteData: Partial<NoteRequest> = {
             title: currentTitle,
@@ -803,7 +844,7 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
             updatedAt: new Date().toISOString().replace("Z", ""),
           };
 
-          console.log("note id props :", noteId)
+          console.log("note id props :", noteId);
           if (!isImage) {
             noteData.imageUrls = noteImages;
           } else {
@@ -811,7 +852,7 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
           }
 
           if (noteId == null) {
-            console.log("note id save :", noteId)
+            console.log("note id save :", noteId);
             noteData.imageUrls = updatedImageUrls;
             const newNote = await saveNote(noteData as NoteRequest);
             noteId = newNote.noteId;
@@ -856,32 +897,31 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
         const filename = url.split("/").pop();
         const fullUrl = `http://localhost:8080/api/images/${filename}`;
         const currentImageId = imageId[i];
-      
+
         const imageElement = createImageWithToolbar(
           fullUrl,
           document.createElement("div"),
           currentImageId,
           filename || `image-${i}`
         );
-      
+
         imageElement.style.cursor = "pointer";
         imageElement.style.userSelect = "auto";
         imageElement.addEventListener("click", () => {
           window.open(fullUrl, "_blank");
         });
-      
+
         if (imageContainerRef.current) {
           imageContainerRef.current.appendChild(imageElement);
-      
+
           const spacer = document.createElement("div");
           spacer.style.height = "40px";
           spacer.style.cursor = "pointer";
           spacer.style.userSelect = "none";
-      
+
           imageContainerRef.current.appendChild(spacer);
         }
       }
-      
     }, [imageUrls]);
 
     //handle paste link
@@ -1023,7 +1063,6 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
                   noteId={noteId !== null ? String(noteId) : null}
                 />
               )}
-
             </div>
           </div>
         </div>
@@ -1036,13 +1075,20 @@ const EditableDiv: React.FC<EditableDivProps> = React.memo(
             onPaste={handlePaste}
             onMouseUp={handleSelection}
             onInput={handleInput}
+            
           />
+          {suggestedText && suggestedText !== noteContent && (
+            <div className="absolute top-0 left-0 p-8 rounded-md min-h-[200px] w-full pointer-events-none text-gray-400 whitespace-pre-wrap break-words z-0">
+              {suggestedText}
+            </div>
+          )}
         </div>
 
         <div
           className="max-w-[1000px] w-full mx-auto mt-2"
           ref={imageContainerRef}
         />
+        {/* ghi âm */}
         <button
           onClick={isListening ? stopListening : startListening}
           className="fixed bottom-6 right-6 bg-gray-500 hover:bg-gray-600 text-white p-3 rounded-full shadow-md transition-all z-50"

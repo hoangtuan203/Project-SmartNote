@@ -15,7 +15,7 @@ import { getListSharesByApprove, ShareResponse } from "@/service/ShareService";
 import { getNoteById } from "@/service/NoteService";
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isPrivateOpen, setIsPrivateOpen] = useState(false);
+  const [isPrivateOpen, setIsPrivateOpen] = useState(true);
   const [recentNotes, setRecentNotes] = useState<RecentNote[]>([]);
   const { darkMode, toggleDarkMode } = useTheme();
   const [isShareOpen, setIsShareOpen] = useState(false);

@@ -66,10 +66,10 @@ spring:
       static-locations: file-uploads/
   server:
     tomcat:
-      max-http-post-size: 50MB   # Tăng kích thước tối đa cho POST request
+      max-http-post-size: 50MB
   servlet:
     multipart:
-      max-file-size: 50MB       # Tăng kích thước tối đa cho mỗi file
+      max-file-size: 50MB
       max-request-size: 100MB
 
   jackson:
@@ -81,7 +81,7 @@ spring:
     port: 587
     username: ${EMAIL_USERNAME}
     password: ${EMAIL_PASSWORD}
-    protocol: smtp  # Đã sửa từ `stmp` thành `smtp`
+    protocol: smtp
     properties:
       mail:
         smtp:

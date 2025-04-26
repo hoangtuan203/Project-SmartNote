@@ -325,7 +325,7 @@ public class AuthenticationService {
         String tokenUrl = "https://graph.facebook.com/v12.0/oauth/access_token"
                 + "?client_id=" + FACEBOOK_CLIENT_ID
                 + "&client_secret=" + FACEBOOK_CLIENT_SECRET
-                + "&redirect_uri=http://localhost:3000/oauth2/callback/facebook"
+                + "&redirect_uri=http://localhost:5173/oauth2/callback/facebook"
                 + "&code=" + code;
 
         ResponseEntity<Map> response = restTemplate.getForEntity(tokenUrl, Map.class);
