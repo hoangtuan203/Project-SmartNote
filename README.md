@@ -68,4 +68,4 @@ Ensure you have the following installed:
    git push origin main
 
 
-<img width="1294" height="598" alt="image" src="https://github.com/user-attachments/assets/96cddfc0-cb92-4973-bb58-59f3deb38476" />
+
